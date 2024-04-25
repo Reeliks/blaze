@@ -1,0 +1,8 @@
+@manage (
+	max_connections = 3,
+	workdir = "./"
+);
+
+@backups "./backups";
+
+@attach "./data/main";

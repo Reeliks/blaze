@@ -1,0 +1,10 @@
+@manage (
+	max_connections = 3,
+	workdir = "./"
+);
+
+@backups "./backups";
+
+@import "./model/scheme";
+
+@attach "./data/main";
