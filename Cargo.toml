@@ -6,3 +6,9 @@ edition = "2021"
 [dependencies]
 regex = "1.5"
 bson = "2.10.0"
+strum = "0.26.2"
+strum_macros = "0.26.2"
+
+[[bin]]
+name = "blaze"
+path = "src/main.rs"
