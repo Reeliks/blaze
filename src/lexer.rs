@@ -199,39 +199,50 @@ impl Lexer {
 
     fn throw_error_if_unresolved_chars_near_string (&mut self) -> io::Result<()> {
         let current_token = self.tokens.last().unwrap();
-        if self.tokens.len() >= 2 && current_token.token_type.to_string() == TokenType::CharArray.to_string() {
+        if self.tokens.len() >= 1 && current_token.token_type.to_string() == TokenType::CharArray.to_string() {
+
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();
 
-            let char_before = &self.code.chars().nth((current_token.position - 1) as usize).unwrap().to_string();
-            let char_after = &self.code.chars().nth(current_token.position as usize + current_token.value.len()).unwrap().to_string();
-            println!("{}", char_after);
+            let char_before_index: i32 = current_token.position as i32 - 1;
+            let char_after_index = current_token.position as usize + current_token.value.len();
 
-            let error_address = format!("{}:{}:{}", self.context.code_source, current_token.line + 1, current_token.position + 1);
-            if both_sides_unresolved_chars_regex.is_match(char_before) || left_side_unresolved_chars_regex.is_match(&char_before) 
-            {
-                return Err(
-                    io::Error::new(
-                        io::ErrorKind::Other,
-                        format!(
-                            "\n\"{}\" near a string with no space between <-= at {}",
-                            char_before, error_address
+            if (char_before_index - 1) >= 0 {
+                let char_before = &self.code.chars().nth((current_token.position - 1) as usize).unwrap().to_string();
+                if both_sides_unresolved_chars_regex.is_match(char_before) || left_side_unresolved_chars_regex.is_match(&char_before) 
+                {
+                    return Err(
+                        io::Error::new(
+                            io::ErrorKind::Other,
+                            format!(
+                                "\n\"{}\" near a string with no space between <-= at {}:{}:{}",
+                                char_before,
+                                self.context.code_source,
+                                current_token.line + 1,
+                                char_before_index + 1
+                            )
+                        )
+                    );
+                }
+            };
+            if char_after_index < self.code.len() {
+                let char_after = &self.code.chars().nth(char_after_index).unwrap().to_string();
+                if both_sides_unresolved_chars_regex.is_match(char_after)
+                {
+                    return Err(
+                        io::Error::new(
+                            io::ErrorKind::Other,
+                            format!(
+                                "\n\"{}\" after a string with no space between <-= at {}:{}:{}",
+                                char_after,
+                                self.context.code_source,
+                                current_token.line + 1,
+                                char_after_index + 1
+                            )
                         )
                     )
-                );
-            }
-            else if both_sides_unresolved_chars_regex.is_match(char_after)
-            {
-                return Err(
-                    io::Error::new(
-                        io::ErrorKind::Other,
-                        format!(
-                            "\n\"{}\" after a string with no space between <-= at {}",
-                            char_after, error_address
-                        )
-                    )
-                )
-            }
+                }
+            };
         } 
 
         Ok(())
