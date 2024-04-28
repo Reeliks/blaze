@@ -1,3 +1,3 @@
 pub mod db;
-pub mod shell;
 pub mod scripting;
+pub mod shell;
