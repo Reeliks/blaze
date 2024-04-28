@@ -23,7 +23,6 @@ fn print_help_section() -> Result<()> {
     lexer   - try the first version of Blaze Language Lexer
     create  - create a new datablaze"#;
     println!("{}", help_list);
-    Ok(())
 }
 
 pub fn create_db_with_console() -> Result<()> {
