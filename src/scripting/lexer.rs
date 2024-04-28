@@ -45,7 +45,7 @@ impl Lexer {
                     }
                 }
                 Err(err) => {
-                    println!("{}", err);
+                    eprintln!("{}", err);
                     break;
                 }
             };
