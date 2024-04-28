@@ -1,4 +1,4 @@
-use strum_macros::{Display, EnumIter}; 
+use strum_macros::{Display, EnumIter};
 
 pub struct Token {
     pub token_type: TokenType,
@@ -8,7 +8,8 @@ pub struct Token {
 }
 
 #[derive(Debug, EnumIter, Display)]
-pub enum TokenType { VariableAssignment,
+pub enum TokenType {
+    VariableAssignment,
     FunctionAssignment,
     QueryKeyword,
     ImportKeyword,
@@ -28,11 +29,11 @@ pub enum TokenType { VariableAssignment,
     ExpressionEnd,
     NewLine,
     Indent,
-    Carriage
+    Carriage,
 }
 
 impl TokenType {
-    pub fn regex_str (&self) -> &str {
+    pub fn regex_str(&self) -> &str {
         match self {
             TokenType::VariableAssignment => r"let|var",
             TokenType::QueryKeyword => r"get|set|new|del",
@@ -54,13 +55,10 @@ impl TokenType {
             TokenType::ExpressionEnd => r";",
             TokenType::NewLine => r"\n",
             TokenType::Indent => r"\t",
-            TokenType::Carriage => r"\r" 
+            TokenType::Carriage => r"\r",
         }
     }
 }
 
-pub const WHITESPACE_TOKENS: [TokenType; 3] = [
-    TokenType::Space,
-    TokenType::Indent, 
-    TokenType::Carriage
-];
+pub const WHITESPACE_TOKENS: [TokenType; 3] =
+    [TokenType::Space, TokenType::Indent, TokenType::Carriage];

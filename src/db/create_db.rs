@@ -1,6 +1,6 @@
-use std::io::{Result, Write};
-use std::path::PathBuf;
 use std::fs::{self, File};
+use std::io::{Result, Write};
+use std::path::{Path, PathBuf};
 
 pub const OFFICIAL_REPOSITORY: &str = "https://github.com/Reeliks/blaze";
 
@@ -8,41 +8,38 @@ pub fn create_db_structure(path_to_db: &str, creation_process_printing: bool) ->
     let mut db_workdir_path_buf = PathBuf::from(&path_to_db);
     db_workdir_path_buf.push("datablaze");
     create_db_folders(&db_workdir_path_buf)?;
-    
+
     let is_manage_file_created: bool = create_manage_file(&db_workdir_path_buf)?;
     if creation_process_printing {
         if is_manage_file_created {
             println!("manage.blz has been created")
-        }
-        else {
+        } else {
             println!("manage.blz already exists; skipping...");
         }
         println!("\nA new datablaze has been structured. Use 'blaze --help' to see the commands.\nTo contribute the development process, check out the official repository:\n{}", OFFICIAL_REPOSITORY);
     }
-    
+
     Ok(())
 }
 
-fn create_db_folders(db_path_buf: &PathBuf) -> Result<()> {
+fn create_db_folders(db_path_buf: &Path) -> Result<()> {
     for folder in ["data", "model"] {
-        let mut cloned_db_path_buf = db_path_buf.clone();
+        let mut cloned_db_path_buf = db_path_buf.to_path_buf();
         cloned_db_path_buf.push(folder);
         fs::create_dir_all(cloned_db_path_buf)?;
-    };
-    Ok(())  
+    }
+    Ok(())
 }
 
-fn create_manage_file(path_to_db_buf: &PathBuf) -> Result<bool>{
-    let mut managing_file_path_buf = path_to_db_buf.clone();
-    let manage_file_content = 
-    br#"manage (
+fn create_manage_file(path_to_db_buf: &Path) -> Result<bool> {
+    let mut managing_file_path_buf = path_to_db_buf.to_path_buf();
+    let manage_file_content = br#"manage (
     tmax_connections = 3,
     work_dir = "/",
     backups_dir = "backups/"
 );
 
 attach "/data/main;"#;
-
 
     managing_file_path_buf.push("manage.blz");
     let _ = recreate_directories(&managing_file_path_buf.clone());
@@ -61,11 +58,9 @@ attach "/data/main;"#;
     Ok(false)
 }
 
-fn recreate_directories(path_buf: &PathBuf) -> Result<()> {
+fn recreate_directories(path_buf: &Path) -> Result<()> {
     if let Some(parent_dir) = path_buf.parent() {
         fs::create_dir_all(parent_dir)?;
     };
     Ok(())
 }
-
-
