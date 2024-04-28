@@ -37,7 +37,7 @@ impl Lexer {
                         .contains(&last_token.token_type.to_string())
                     {
                         let start_position =
-                            1 + self.context.position - last_token.value.len() as u32;
+                            1 + self.context.position - last_token.value.len();
                         println!(
                             "{}:{} = {}",
                             start_position, last_token.value, last_token.token_type
@@ -72,7 +72,7 @@ impl Lexer {
                 if token_regex.clone().to_string() == TokenType::ExpressionEnd.to_string() {
                     self.context.line += 1;
                 };
-                self.context.position += matched_string.len() as u32;
+                self.context.position += matched_string.len();
                 self.find_lexical_errors()?;
                 return Ok(true);
             }
