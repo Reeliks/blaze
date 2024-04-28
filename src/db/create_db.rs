@@ -1,0 +1,61 @@
+use std::io::{Result, Write};
+use std::path::PathBuf;
+use std::fs::{self, File};
+
+pub const OFFICIAL_REPOSITORY: &str = "https://github.com/Reeliks/blaze";
+
+pub fn create_db_structure(path_to_db: &str, creation_process_printing: bool) -> Result<()> {
+    let mut db_workdir_path_buf = PathBuf::from(&path_to_db);
+    db_workdir_path_buf.push("datablaze");
+    create_db_folders(&db_workdir_path_buf)?;
+    
+    let is_manage_file_created: bool = create_manage_file(&db_workdir_path_buf)?;
+    if creation_process_printing {
+        if is_manage_file_created {
+            println!("manage.blz has been created")
+        }
+        else {
+            println!("manage.blz already exists; skipping...");
+        }
+        println!("\nA new datablaze has been structured. Use 'blaze --help' to see the commands.\nTo contribute the development process, check out the official repository:\n{}", OFFICIAL_REPOSITORY);
+    }
+    
+    Ok(())
+}
+
+fn create_db_folders(db_path_buf: &PathBuf) -> Result<()> {
+    for folder in ["data", "model"] {
+        let mut cloned_db_path_buf = db_path_buf.clone();
+        cloned_db_path_buf.push(folder);
+        fs::create_dir_all(cloned_db_path_buf)?;
+    };
+    Ok(())  
+}
+
+fn create_manage_file(path_to_db_buf: &PathBuf) -> Result<bool>{
+    let mut managing_file_path_buf = path_to_db_buf.clone();
+    managing_file_path_buf.push("manage.blz");
+    let _ = recreate_directories(&managing_file_path_buf.clone());
+    if let Err(e) = fs::metadata(managing_file_path_buf.to_str().unwrap()) {
+        match e.kind() {
+            std::io::ErrorKind::NotFound => {
+                let mut managing_file = File::create(&mut managing_file_path_buf)?;
+                let _ = managing_file.write_all(b"@manage (\n\tmax_connections = 3,\n\tworkdir = \"./\"\n);\n\n@backups \"./backups\";\n\n@attach \"./data/main\";");
+                return Ok(true);
+            }
+            _ => {
+                panic!("{}", e);
+            }
+        };
+    };
+    Ok(false)
+}
+
+fn recreate_directories(path_buf: &PathBuf) -> Result<()> {
+    if let Some(parent_dir) = path_buf.parent() {
+        fs::create_dir_all(parent_dir)?;
+    };
+    Ok(())
+}
+
+

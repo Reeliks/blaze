@@ -12,3 +12,6 @@ strum_macros = "0.26.2"
 [[bin]]
 name = "blaze"
 path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
