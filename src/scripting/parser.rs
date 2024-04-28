@@ -1,5 +1,6 @@
 use super::context::Context;
 use super::tokens::Token;
+use std::io::Result;
 
 pub struct Parser {
     tokens: Vec<Token>, 
@@ -16,5 +17,11 @@ impl Parser {
     
     pub fn get_context(&mut self) -> &mut Context {
         return &mut self.context;
+    }
+
+    pub fn parse () -> Result<()> {
+            
+
+        Ok(())
     }
 }
