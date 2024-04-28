@@ -45,12 +45,12 @@ attach "/data/main;"#;
 
 
     managing_file_path_buf.push("manage.blz");
-    let _ = recreate_directories(&managing_file_path_buf.clone());
+    recreate_directories(&managing_file_path_buf.clone())?;
     if let Err(e) = fs::metadata(managing_file_path_buf.to_str().unwrap()) {
         match e.kind() {
             std::io::ErrorKind::NotFound => {
                 let mut managing_file = File::create(&mut managing_file_path_buf)?;
-                let _ = managing_file.write_all(manage_file_content);
+                managing_file.write_all(manage_file_content)?;
                 return Ok(true);
             }
             _ => {
