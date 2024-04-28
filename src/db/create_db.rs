@@ -34,13 +34,23 @@ fn create_db_folders(db_path_buf: &PathBuf) -> Result<()> {
 
 fn create_manage_file(path_to_db_buf: &PathBuf) -> Result<bool>{
     let mut managing_file_path_buf = path_to_db_buf.clone();
+    let manage_file_content = 
+    br#"manage (
+    tmax_connections = 3,
+    work_dir = "/",
+    backups_dir = "backups/"
+);
+
+attach "/data/main;"#;
+
+
     managing_file_path_buf.push("manage.blz");
     let _ = recreate_directories(&managing_file_path_buf.clone());
     if let Err(e) = fs::metadata(managing_file_path_buf.to_str().unwrap()) {
         match e.kind() {
             std::io::ErrorKind::NotFound => {
                 let mut managing_file = File::create(&mut managing_file_path_buf)?;
-                let _ = managing_file.write_all(b"@manage (\n\tmax_connections = 3,\n\tworkdir = \"./\"\n);\n\n@backups \"./backups\";\n\n@attach \"./data/main\";");
+                let _ = managing_file.write_all(manage_file_content);
                 return Ok(true);
             }
             _ => {

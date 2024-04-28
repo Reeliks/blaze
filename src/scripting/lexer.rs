@@ -1,98 +1,27 @@
+use strum::IntoEnumIterator;
 use std::io;
 use regex::Regex;
-use strum::IntoEnumIterator;
-use strum_macros::{Display, EnumIter}; 
 
-pub struct Token {
-    token_type: TokenType,
-    position: u32,
-    line: u32,
-    value: String,
-}
-
-#[derive(Debug, EnumIter, Display)]
-pub enum TokenType { VariableAssignment,
-    FunctionAssignment,
-    QueryKeyword,
-    ImportKeyword,
-    EqualSign,
-    Operator,
-    OpeningParenthesis,
-    ClosingParenthesis,
-    OpeningCurlyBracket,
-    ClosingCurlyBracket,
-    CharArray,
-    Alphanumeric,
-    Number,
-    Space,
-    Dot,
-    Comma,
-    Colon,
-    ExpressionEnd,
-    NewLine,
-    Indent,
-    Carriage
-}
-
-impl TokenType {
-    pub fn regex_str (&self) -> &str {
-        match self {
-            TokenType::VariableAssignment => r"let|var",
-            TokenType::QueryKeyword => r"get|set|new|del",
-            TokenType::ImportKeyword => r"import",
-            TokenType::FunctionAssignment => r"function",
-            TokenType::EqualSign => r"=",
-            TokenType::Operator => r"[+\-*\/]",
-            TokenType::OpeningParenthesis => r"\(",
-            TokenType::ClosingParenthesis => r"\)",
-            TokenType::OpeningCurlyBracket => r"\{",
-            TokenType::ClosingCurlyBracket => r"\}",
-            TokenType::CharArray => r#"".*?[^\\]"|"""#,
-            TokenType::Alphanumeric => r"[a-zA-Z_]\w*",
-            TokenType::Number => r"\d+(\.\d+)?",
-            TokenType::Space => " ",
-            TokenType::Dot => r"\.",
-            TokenType::Comma => r",",
-            TokenType::Colon => r":",
-            TokenType::ExpressionEnd => r";",
-            TokenType::NewLine => r"\n",
-            TokenType::Indent => r"\t",
-            TokenType::Carriage => r"\r" 
-        }
-    }
-}
-
-const WHITESPACE_TOKENS: [TokenType; 3] = [
-    TokenType::Space,
-    TokenType::Indent, 
-    TokenType::Carriage
-];
-
-pub struct CodeContext {
-    position: u32,
-    line: u32,
-    code_source: String
-}
-
-impl CodeContext {
-    pub fn new (code_source: String) -> Self {
-        CodeContext { code_source, line: 0, position: 0 }
-    }
-}
+use super::tokens::{WHITESPACE_TOKENS, Token, TokenType};
+use super::context::Context;
 
 pub struct Lexer {
+    pub context: Context,
     code: String,
-    context: CodeContext,
     tokens: Vec<Token>
 }
 
 impl Lexer {
-    pub fn new (code: String, code_source: String) -> Self {
+    pub fn new (code: String) -> Self {
         Lexer { 
             code,
-            context: CodeContext::new(code_source), 
+            context: Context::new(), 
             tokens: vec![] 
         }
+    }
+
+    pub fn get_context (&mut self) -> &mut Context {
+       return &mut self.context; 
     }
 
     pub fn analyze(mut self) -> io::Result<Vec<Token>>

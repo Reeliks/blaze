@@ -48,6 +48,10 @@ fn analyze_lexically () -> Result<()>
     let mut code_to_parse = String::new();
     std::io::stdin().read_line(&mut code_to_parse)?;
     code_to_parse = code_to_parse.trim().to_string();
-    lexer::Lexer::new(code_to_parse, "Buffer".to_string()).analyze()?;
+
+    let mut code_lexer = lexer::Lexer::new(code_to_parse);
+    code_lexer.get_context().set_code_source("Shell".to_string());
+    code_lexer.analyze()?;
+    
     Ok(())
 }
