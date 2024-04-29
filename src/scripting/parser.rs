@@ -56,7 +56,7 @@ impl Parser {
 
         if expected_tokens
             .iter()
-            .any(|x| x.to_string() == current_token.token_type.to_string())
+            .any(|x| *x == current_token.token_type)
         {
             self.context.position += 1;
             return Some(current_token.clone());

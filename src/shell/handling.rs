@@ -12,7 +12,7 @@ pub fn handle_command_arguments() -> Result<()> {
             _ => {
                 eprintln!("Invalid arguments");
                 std::process::exit(1);
-            },
+            }
         }
     } else {
         print_help_section();
