@@ -33,8 +33,8 @@ impl Lexer {
                     }
                     let last_token = self.tokens.last().unwrap();
                     if !WHITESPACE_TOKENS
-                        .map(|x| x.to_string())
-                        .contains(&last_token.token_type.to_string())
+                        .map(|x| x)
+                        .contains(&last_token.token_type)
                     {
                         let start_position =
                             1 + self.context.position - last_token.value.len() as u64;
@@ -69,7 +69,7 @@ impl Lexer {
                     line: self.context.line,
                     value: matched_string.to_string(),
                 });
-                if token_regex.clone().to_string() == TokenType::ExpressionEnd.to_string() {
+                if token_regex.to_string() == TokenType::ExpressionEnd.to_string() {
                     self.context.line += 1;
                 };
                 self.context.position += matched_string.len() as u64;
@@ -101,10 +101,8 @@ impl Lexer {
             let current_token = self.tokens.last().unwrap();
             let last_token = self.tokens.get(self.tokens.len() - 2).unwrap();
 
-            let current_token_is_alphanumeric =
-                current_token.token_type.to_string() == TokenType::Alphanumeric.to_string();
-            let last_token_is_number =
-                last_token.token_type.to_string() == TokenType::Number.to_string();
+            let current_token_is_alphanumeric = current_token.token_type == TokenType::Alphanumeric;
+            let last_token_is_number = last_token.token_type == TokenType::Number;
             if last_token_is_number && current_token_is_alphanumeric {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -125,9 +123,7 @@ impl Lexer {
 
     fn throw_error_if_unresolved_chars_near_string(&mut self) -> io::Result<()> {
         let current_token = self.tokens.last().unwrap();
-        if !self.tokens.is_empty()
-            && current_token.token_type.to_string() == TokenType::CharArray.to_string()
-        {
+        if !self.tokens.is_empty() && current_token.token_type == TokenType::CharArray {
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();
 
