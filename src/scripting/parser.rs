@@ -1,13 +1,17 @@
-use super::ast::node::ExpressionNode;
+use super::ast::boolean_node::BooleanNode;
+use super::ast::expression_node::ExpressionNode;
+use super::ast::null_node::NullNode;
 use super::ast::statements_node::StatementsNode;
+use super::ast::number_node::NumberNode;
+use super::ast::string_node::StringNode;
+use super::ast::variable_node::VariableNode;
 use super::context::Context;
-use super::tokens::{Token, TokenType};
+use super::tokens::{Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS};
 use std::io::{self, Result};
 
 pub struct Parser {
     tokens: Vec<Token>,
     context: Context,
-    nodes: Vec<Box<dyn ExpressionNode>>,
 }
 
 impl Parser {
@@ -15,7 +19,6 @@ impl Parser {
         Parser {
             context: Context::default(),
             tokens,
-            nodes: vec![],
         }
     }
 
@@ -23,52 +26,27 @@ impl Parser {
         &mut self.context
     }
 
-    pub fn parse(mut self) -> Result<Vec<Box<dyn ExpressionNode>>> {
-        let _root = StatementsNode::new();
-        loop {
-            match self.next_node() {
-                Ok(proceed_parsing) => {
-                    if !proceed_parsing {
-                        return Ok(self.nodes);
-                    }
-                    let _last_node = self.nodes.last().unwrap();
-                    // self.require_token(vec![TokenType::ExpressionEnd]);
-                }
-                Err(e) => {
-                    eprintln!("{}", e);
-                    break;
-                }
-            }
+    pub fn get_current_token_and_move(&mut self) -> Token {
+        self.context.position += 1;
+        self.tokens[self.context.position as usize].clone()
+    }
+
+    pub fn parse(&mut self) -> Result<StatementsNode> {
+        let mut root = StatementsNode::new();
+        while self.context.position < self.tokens.len() as u64 {
+            let parsed_expression = self.parse_expression();
+            self.require_token_and_move(vec![TokenType::ExpressionEnd])?;
+            root.add_node(parsed_expression);
         }
-
-        Ok(vec![])
+        Ok(root)
     }
 
-    pub fn next_node(&mut self) -> Result<bool> {
-        if self.context.position >= self.tokens.len() as u64 {
-            return Ok(false);
+    pub fn require_token_and_move(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
+        let current_token = self.get_current_token_and_move();
+        if expected_tokens.contains(&current_token.token_type) {
+            
+            return Ok(current_token);
         }
-        Ok(false)
-    }
-
-    pub fn match_token(&mut self, expected_tokens: &[TokenType]) -> Option<Token> {
-        let current_token = &self.tokens[self.context.position as usize];
-
-        if expected_tokens
-            .iter()
-            .any(|x| x.to_string() == current_token.token_type.to_string())
-        {
-            self.context.position += 1;
-            return Some(current_token.clone());
-        };
-        None
-    }
-
-    pub fn require_token(mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
-        let token = self.match_token(&expected_tokens);
-        if let Some(token) = token {
-            return Ok(token);
-        };
         let error_message = format!(
             "{} is expected at position {} <= {}:{}:{}",
             expected_tokens[0],
@@ -78,5 +56,57 @@ impl Parser {
             self.context.position
         );
         Err(io::Error::new(io::ErrorKind::Other, error_message))
+    }
+
+    pub fn parse_expression(&mut self) -> Box<dyn ExpressionNode> {
+        let current_token = self.get_current_token_and_move();
+        match current_token.token_type {
+            x if [TokenType::VariableAssign].contains(&x) => {             
+                let _variable_token = 
+                    self.require_token_and_move(vec![TokenType::Alphanumeric]);
+                let _equals_sign_token =
+                    self.require_token_and_move(vec![TokenType::Assign]);
+                
+
+            },
+            x if BINARY_OPERATOR_TOKENS.contains(&x) => {
+                  
+            },
+            _ => {
+                self.context.position -= 1;
+            }
+        }
+        Box::new(StatementsNode { nodes: vec![] })
+    }
+
+    pub fn parse_formula (mut self) -> Box<dyn ExpressionNode> {
+        let left_node: Box<dyn ExpressionNode>;
+        let current_token = self
+            .require_token_and_move(FORMULA_TOKENS.to_vec())
+            .unwrap();
+
+        match current_token.token_type {
+            TokenType::Alphanumeric => {
+                left_node = Box::new
+                    (VariableNode::new(current_token.value));
+            },
+            TokenType::CharArray => {
+                left_node = Box::new
+                    (StringNode::new(current_token.value));
+            },
+            TokenType::Number => {
+                left_node = Box::new
+                    (NumberNode::new(current_token.value.parse().unwrap()));
+            },
+            TokenType::True | TokenType::False => {
+                left_node = Box::new
+                    (BooleanNode::new(current_token.token_type).unwrap());
+            },
+            TokenType::Null => {
+                left_node = Box::new(NullNode);
+            }
+            _ => todo!()
+        };
+        left_node
     }
 }

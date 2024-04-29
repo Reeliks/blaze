@@ -1,7 +1,7 @@
-use crate::scripting::ast::node::ExpressionNode;
+use crate::scripting::ast::expression_node::ExpressionNode;
 
 pub struct StatementsNode {
-    nodes: Vec<Box<dyn ExpressionNode>>,
+    pub nodes: Vec<Box<dyn ExpressionNode>>,
 }
 
 impl StatementsNode {
@@ -15,3 +15,9 @@ impl StatementsNode {
 }
 
 impl ExpressionNode for StatementsNode {}
+
+impl Default for StatementsNode {
+    fn default() -> Self {
+        Self::new()
+    }
+}

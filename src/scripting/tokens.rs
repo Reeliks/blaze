@@ -8,18 +8,37 @@ pub struct Token {
     pub value: String,
 }
 
-#[derive(Debug, EnumIter, Display, Clone)]
+// It's necessary to put tokens that structure more longer ones
+// below in order to make sure the lexer recognizes tokens properly.
+#[derive(Debug, EnumIter, Display, Clone, PartialEq)]
 pub enum TokenType {
-    VariableAssignment,
-    FunctionAssignment,
-    QueryKeyword,
+    // Directives
     ImportKeyword,
+    Query,
+    // Conditions
+    If,
+    Else,
+    // Binary Operators
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
     EqualSign,
-    Operator,
-    OpeningParenthesis,
-    ClosingParenthesis,
-    OpeningCurlyBracket,
-    ClosingCurlyBracket,
+    NotEqualSign,
+    Greater,
+    Less,
+    GreaterOrEqual,
+    LessOrEqual,
+    // Assignment
+    Assign,
+    VariableAssign,
+    FunctionAssign,
+    // Brackets
+    LPar,
+    RPar,
+    LBracket,
+    RBracket,
+    // Types
     CharArray,
     Alphanumeric,
     Number,
@@ -27,7 +46,11 @@ pub enum TokenType {
     Dot,
     Comma,
     Colon,
+    True,
+    False,
+    Null,
     ExpressionEnd,
+    // Whitespace
     NewLine,
     Indent,
     Carriage,
@@ -36,16 +59,30 @@ pub enum TokenType {
 impl TokenType {
     pub fn regex_str(&self) -> &str {
         match self {
-            TokenType::VariableAssignment => r"let|var",
-            TokenType::QueryKeyword => r"get|set|new|del",
-            TokenType::ImportKeyword => r"import",
-            TokenType::FunctionAssignment => r"function",
-            TokenType::EqualSign => r"=",
-            TokenType::Operator => r"[+\-*\/]",
-            TokenType::OpeningParenthesis => r"\(",
-            TokenType::ClosingParenthesis => r"\)",
-            TokenType::OpeningCurlyBracket => r"\{",
-            TokenType::ClosingCurlyBracket => r"\}",
+            TokenType::VariableAssign => r"(?:let|var)[^\w\d]",
+            TokenType::ImportKeyword => r"import[^\w\d]",
+            TokenType::FunctionAssign => r"function[^\w\d]",
+            TokenType::Query => r"(?:new|get|set|del)[^\w\d]",
+            TokenType::True => r"true[^\w\d]",
+            TokenType::False => r"false[^\w\d]",
+            TokenType::Null => r"null[^\w\d]",
+            TokenType::If => r"if[^\w\d]",
+            TokenType::Else => r"else[^\w\d]",
+            TokenType::Addition => r"\+",
+            TokenType::Subtraction => r"-",
+            TokenType::Multiplication => r"\*",
+            TokenType::Division => r"\/", 
+            TokenType::Assign => r"=",
+            TokenType::EqualSign => r"==",
+            TokenType::NotEqualSign => r"!=",
+            TokenType::Greater => r">",
+            TokenType::Less => r"<",
+            TokenType::GreaterOrEqual => r">=",
+            TokenType::LessOrEqual => r"<=",
+            TokenType::LPar => r"\(",
+            TokenType::RPar => r"\)",
+            TokenType::LBracket => r"\{",
+            TokenType::RBracket => r"\}",
             TokenType::CharArray => r#"".*?[^\\]"|"""#,
             TokenType::Alphanumeric => r"[a-zA-Z_]\w*",
             TokenType::Number => r"\d+(\.\d+)?",
@@ -61,5 +98,28 @@ impl TokenType {
     }
 }
 
-pub const WHITESPACE_TOKENS: [TokenType; 3] =
-    [TokenType::Space, TokenType::Indent, TokenType::Carriage];
+pub const WHITESPACE_TOKENS: [TokenType; 4] =
+    [TokenType::NewLine, TokenType::Space, TokenType::Indent, TokenType::Carriage];
+
+pub const BINARY_OPERATOR_TOKENS: [TokenType; 10] = [
+        TokenType::Addition, 
+        TokenType::Subtraction, 
+        TokenType::Multiplication, 
+        TokenType::Division,
+        TokenType::EqualSign, 
+        TokenType::NotEqualSign, 
+        TokenType::Less, 
+        TokenType::Greater,
+        TokenType::LessOrEqual, 
+        TokenType::GreaterOrEqual 
+];
+
+pub const FORMULA_TOKENS: [TokenType; 6] = [
+    TokenType::CharArray, 
+    TokenType::Number, 
+    TokenType::Alphanumeric, 
+    TokenType::True, 
+    TokenType::False,
+    TokenType::Null
+];
+

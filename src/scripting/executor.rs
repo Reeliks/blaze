@@ -5,3 +5,9 @@ impl Executor {
         Executor {}
     }
 }
+
+impl Default for Executor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
