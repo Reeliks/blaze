@@ -1,7 +1,7 @@
 pub struct Context {
     pub code_source: String,
-    pub position: usize,
-    pub line: usize
+    pub position: u64,
+    pub line: u64
 }
 
 impl Context {

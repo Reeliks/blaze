@@ -37,7 +37,7 @@ impl Lexer {
                         .contains(&last_token.token_type.to_string())
                     {
                         let start_position =
-                            1 + self.context.position - last_token.value.len();
+                            1 + self.context.position - last_token.value.len() as u64;
                         println!(
                             "{}:{} = {}",
                             start_position, last_token.value, last_token.token_type
@@ -72,7 +72,7 @@ impl Lexer {
                 if token_regex.clone().to_string() == TokenType::ExpressionEnd.to_string() {
                     self.context.line += 1;
                 };
-                self.context.position += matched_string.len();
+                self.context.position += matched_string.len() as u64;
                 self.find_lexical_errors()?;
                 return Ok(true);
             }
@@ -131,10 +131,10 @@ impl Lexer {
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();
 
-            let char_before_index: i32 = current_token.position as i32 - 1;
-            let char_after_index = current_token.position as usize + current_token.value.len();
+            let char_before_index: u64 = current_token.position - 1;
+            let char_after_index: u64 = current_token.position + current_token.value.len() as u64;
 
-            if (char_before_index - 1) >= 0 {
+            if char_before_index as i32 - 1 >= 0 {
                 let char_before = &self
                     .code
                     .chars()
@@ -156,8 +156,8 @@ impl Lexer {
                     ));
                 }
             };
-            if char_after_index < self.code.len() {
-                let char_after = &self.code.chars().nth(char_after_index).unwrap().to_string();
+            if char_after_index < self.code.len() as u64 {
+                let char_after = &self.code.chars().nth(char_after_index as usize).unwrap().to_string();
                 if both_sides_unresolved_chars_regex.is_match(char_after) {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,

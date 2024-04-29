@@ -24,15 +24,16 @@ impl Parser {
     }
 
     pub fn parse (mut self) -> Result<Vec<Box<dyn ExpressionNode>>> {
-        let _root = StatementsNode::new(); loop {
+        let mut root = StatementsNode::new();
+        loop {
             match self.next_node() {
                 Ok(proceed_parsing) => {
                     if !proceed_parsing {
                         return Ok(self.nodes);
                     }
-                    let _last_node = self.nodes.last().unwrap();
-                    // self.require_token(vec![TokenType::ExpressionEnd]);
-                    
+                    let last_node = self.nodes.last().unwrap().clone();
+                    self.require_token(vec![TokenType::ExpressionEnd]);
+                    root.add_node(last_node);
                 },
                 Err(e) => {
                     eprintln!("{}", e);
