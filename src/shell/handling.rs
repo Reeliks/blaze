@@ -28,7 +28,7 @@ fn print_help_section() {
 pub fn create_db_with_console() -> Result<()> {
     let mut path = String::new();
     println!("Specify a path to a datablaze");
-    _ = io::stdin().read_line(&mut path);
+    io::stdin().read_line(&mut path)?;
     let path = path.trim();
     create_db::create_db_structure(path, true)?;
 
