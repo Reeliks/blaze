@@ -2,8 +2,8 @@ use strum_macros::{Display, EnumIter};
 
 pub struct Token {
     pub token_type: TokenType,
-    pub position: u32,
-    pub line: u32,
+    pub position: usize,
+    pub line: usize,
     pub value: String,
 }
 
