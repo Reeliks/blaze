@@ -7,7 +7,6 @@ edition = "2021"
 regex = "1.10"
 bson = "2.10"
 strum = "0.26"
-serde_json = "1.0.116"
 strum_macros = "0.26"
 
 [[bin]]

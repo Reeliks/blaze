@@ -99,9 +99,9 @@ impl Lexer {
             let last_token = self.tokens.get(self.tokens.len() - 2).unwrap();
 
             let current_token_is_alphanumeric =
-                current_token.token_type == TokenType::Alphanumeric;
+                current_token.is_type(TokenType::Alphanumeric);
             let last_token_is_number =
-                last_token.token_type == TokenType::Number;
+                last_token.is_type(TokenType::Number);
             if last_token_is_number && current_token_is_alphanumeric {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -123,7 +123,7 @@ impl Lexer {
     fn throw_error_if_unresolved_chars_near_string(&mut self) -> io::Result<()> {
         let current_token = self.tokens.last().unwrap();
 
-        if !self.tokens.is_empty() && current_token.token_type == TokenType::CharArray {
+        if !self.tokens.is_empty() && current_token.is_type(TokenType::CharArray) {
 
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();

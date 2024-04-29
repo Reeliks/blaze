@@ -8,6 +8,12 @@ pub struct Token {
     pub value: String,
 }
 
+impl Token {
+    pub fn is_type(&self, token_type: TokenType) -> bool {
+        self.token_type == token_type
+    }
+}
+
 // It's necessary to put tokens that structure more longer ones
 // below in order to make sure the lexer recognizes tokens properly.
 #[derive(Debug, EnumIter, Display, Clone, PartialEq)]

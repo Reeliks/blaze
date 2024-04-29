@@ -48,7 +48,6 @@ version = "0.1.0"
 dependencies = [
  "bson",
  "regex",
- "serde_json",
  "strum",
  "strum_macros",
 ]
