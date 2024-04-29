@@ -40,7 +40,7 @@ impl Parser {
         }
         Ok(root)
     }
-
+  
     pub fn require_token_and_move(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
         let current_token = self.get_current_token_and_move();
         if expected_tokens.contains(&current_token.token_type) {

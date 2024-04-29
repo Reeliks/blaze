@@ -122,9 +122,9 @@ impl Lexer {
 
     fn throw_error_if_unresolved_chars_near_string(&mut self) -> io::Result<()> {
         let current_token = self.tokens.last().unwrap();
-        if !self.tokens.is_empty()
-            && current_token.token_type == TokenType::CharArray
-        {
+
+        if !self.tokens.is_empty() && current_token.token_type == TokenType::CharArray {
+
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();
 

@@ -1,6 +1,6 @@
 use strum_macros::{Display, EnumIter};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
     pub position: u64,
