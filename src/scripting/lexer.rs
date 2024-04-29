@@ -134,7 +134,7 @@ impl Lexer {
             let char_before_index: u64 = current_token.position - 1;
             let char_after_index: u64 = current_token.position + current_token.value.len() as u64;
 
-            if char_before_index as i32 - 1 >= 0 {
+            if char_before_index as i32 > 0 {
                 let char_before = &self
                     .code
                     .chars()
@@ -157,7 +157,12 @@ impl Lexer {
                 }
             };
             if char_after_index < self.code.len() as u64 {
-                let char_after = &self.code.chars().nth(char_after_index as usize).unwrap().to_string();
+                let char_after = &self
+                    .code
+                    .chars()
+                    .nth(char_after_index as usize)
+                    .unwrap()
+                    .to_string();
                 if both_sides_unresolved_chars_regex.is_match(char_after) {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,

@@ -1,2 +1,1 @@
-pub trait ExpressionNode {} 
-
+pub trait ExpressionNode {}

@@ -1,5 +1,6 @@
 use strum_macros::{Display, EnumIter};
 
+#[derive(Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub position: u64,
@@ -7,7 +8,7 @@ pub struct Token {
     pub value: String,
 }
 
-#[derive(Debug, EnumIter, Display)]
+#[derive(Debug, EnumIter, Display, Clone)]
 pub enum TokenType {
     VariableAssignment,
     FunctionAssignment,

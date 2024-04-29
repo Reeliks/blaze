@@ -1,7 +1,7 @@
 pub struct Context {
     pub code_source: String,
     pub position: u64,
-    pub line: u64
+    pub line: u64,
 }
 
 impl Context {
@@ -9,7 +9,7 @@ impl Context {
         Context {
             code_source: "void".to_string(),
             position: 0,
-            line: 0
+            line: 0,
         }
     }
 
