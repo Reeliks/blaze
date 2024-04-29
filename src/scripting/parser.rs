@@ -7,7 +7,7 @@ use std::io::{self, Result};
 pub struct Parser {
     tokens: Vec<Token>,
     context: Context,
-    nodes: Vec<Box<dyn ExpressionNode>>
+    nodes: Vec<Box<dyn ExpressionNode>>,
 }
 
 impl Parser {
@@ -15,7 +15,7 @@ impl Parser {
         Parser {
             context: Context::default(),
             tokens,
-            nodes: vec![]
+            nodes: vec![],
         }
     }
 
@@ -23,8 +23,9 @@ impl Parser {
         &mut self.context
     }
 
-    pub fn parse (mut self) -> Result<Vec<Box<dyn ExpressionNode>>> {
-        let _root = StatementsNode::new(); loop {
+    pub fn parse(mut self) -> Result<Vec<Box<dyn ExpressionNode>>> {
+        let _root = StatementsNode::new();
+        loop {
             match self.next_node() {
                 Ok(proceed_parsing) => {
                     if !proceed_parsing {
@@ -32,8 +33,7 @@ impl Parser {
                     }
                     let _last_node = self.nodes.last().unwrap();
                     // self.require_token(vec![TokenType::ExpressionEnd]);
-                    
-                },
+                }
                 Err(e) => {
                     eprintln!("{}", e);
                     break;
@@ -44,42 +44,39 @@ impl Parser {
         Ok(vec![])
     }
 
-    pub fn next_node (&mut self) -> Result<bool> {
+    pub fn next_node(&mut self) -> Result<bool> {
         if self.context.position >= self.tokens.len() as u64 {
             return Ok(false);
         }
         Ok(false)
     }
 
-    pub fn match_token (&mut self, expected_tokens: &Vec<TokenType>) -> Option<Token> {
-        let current_token = 
-            &self.tokens[self.context.position as usize]; 
+    pub fn match_token(&mut self, expected_tokens: &[TokenType]) -> Option<Token> {
+        let current_token = &self.tokens[self.context.position as usize];
 
-        if expected_tokens.iter().any(|x| x.to_string() == current_token.token_type.to_string()) {
+        if expected_tokens
+            .iter()
+            .any(|x| x.to_string() == current_token.token_type.to_string())
+        {
             self.context.position += 1;
-            Some(current_token);
+            return Some(current_token.clone());
         };
-        None 
+        None
     }
 
-    pub fn require_token (mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
-
+    pub fn require_token(mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
         let token = self.match_token(&expected_tokens);
         if let Some(token) = token {
             return Ok(token);
         };
-        let error_message =
-            format!(
-                "{} is expected at position {} <= {}:{}:{}",
-                 expected_tokens[0].to_string(),
-                 self.context.position.clone(),
-                 self.get_context().code_source.clone(),
-                 self.context.line,
-                 self.context.position
-            );
-        Err(io::Error::new(
-                io::ErrorKind::Other, 
-               error_message)
-        )
+        let error_message = format!(
+            "{} is expected at position {} <= {}:{}:{}",
+            expected_tokens[0],
+            self.context.position.clone(),
+            self.get_context().code_source.clone(),
+            self.context.line,
+            self.context.position
+        );
+        Err(io::Error::new(io::ErrorKind::Other, error_message))
     }
 }
