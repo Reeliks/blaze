@@ -9,7 +9,10 @@ pub fn handle_command_arguments() -> Result<()> {
         match args[1].as_str() {
             "create" => create_db_with_console()?,
             "lexer" => analyze_lexically()?,
-            _ => todo!(),
+            _ => {
+                eprintln!("Invalid arguments");
+                std::process::exit(1);
+            },
         }
     } else {
         print_help_section();
