@@ -41,7 +41,7 @@ fn analyze_lexically() -> Result<()> {
     let mut code_to_parse = String::new();
     std::io::stdin().read_line(&mut code_to_parse)?;
     code_to_parse = code_to_parse.trim().to_string();
-
+    println!("{}", code_to_parse);
     let mut code_lexer = lexer::Lexer::new(code_to_parse);
     code_lexer
         .get_context()

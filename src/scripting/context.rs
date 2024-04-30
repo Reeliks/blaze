@@ -5,9 +5,9 @@ pub struct Context {
 }
 
 impl Context {
-    fn new() -> Self {
+    fn new(code_source: String) -> Self {
         Context {
-            code_source: "void".to_string(),
+            code_source,
             position: 0,
             line: 0,
         }
@@ -20,6 +20,6 @@ impl Context {
 
 impl Default for Context {
     fn default() -> Self {
-        Self::new()
+        Self::new("void".to_string())
     }
 }

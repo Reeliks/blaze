@@ -32,10 +32,7 @@ impl Lexer {
                         return Ok(self.tokens);
                     }
                     let last_token = self.tokens.last().unwrap();
-                    if !WHITESPACE_TOKENS
-                        .map(|x| x)
-                        .contains(&last_token.token_type)
-                    {
+                    if !WHITESPACE_TOKENS.contains(&last_token.token_type) {
                         let start_position =
                             1 + self.context.position - last_token.value.len() as u64;
                         println!(
@@ -62,17 +59,17 @@ impl Lexer {
             let token_regex =
                 Regex::new(format!("^{}", TokenType::regex_str(&token_type)).as_str()).unwrap();
             if let Some(matches) = token_regex.find(positioned_code) {
-                let matched_string = matches.as_str();
+                let matched_str = matches.as_str();
                 self.tokens.push(Token {
                     token_type,
                     position: self.context.position,
                     line: self.context.line,
-                    value: matched_string.to_string(),
+                    value: matched_str.to_string(),
                 });
-                if token_regex.to_string() == TokenType::ExpressionEnd.to_string() {
+                if matched_str == TokenType::ExpressionEnd.to_string() {
                     self.context.line += 1;
                 };
-                self.context.position += matched_string.len() as u64;
+                self.context.position += matched_str.len() as u64;
                 self.find_lexical_errors()?;
                 return Ok(true);
             }
@@ -80,29 +77,28 @@ impl Lexer {
         Err(io::Error::new(
             io::ErrorKind::Other,
             format!(
-                "\n\"{}\" token isn't registered <-= at {}:{}:{}",
+                "\n\"{}\" token isn't recognized <-= at {}:{}:{}",
                 positioned_code,
                 self.context.code_source,
                 self.context.line + 1,
                 self.context.position + 1
-            )
-            .to_string(),
+            ),
         ))
     }
 
     fn find_lexical_errors(&mut self) -> io::Result<()> {
-        self.throw_error_if_number_and_string_together()?;
+        self.throw_error_if_alphanumeric_in_number()?;
         self.throw_error_if_unresolved_chars_near_string()?;
         Ok(())
     }
 
-    fn throw_error_if_number_and_string_together(&self) -> io::Result<()> {
+    fn throw_error_if_alphanumeric_in_number(&self) -> io::Result<()> {
         if self.tokens.len() >= 2 {
             let current_token = self.tokens.last().unwrap();
             let last_token = self.tokens.get(self.tokens.len() - 2).unwrap();
 
-            let current_token_is_alphanumeric = current_token.token_type == TokenType::Alphanumeric;
-            let last_token_is_number = last_token.token_type == TokenType::Number;
+            let current_token_is_alphanumeric = current_token.is_type(TokenType::Alphanumeric);
+            let last_token_is_number = last_token.is_type(TokenType::Number);
             if last_token_is_number && current_token_is_alphanumeric {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -123,7 +119,8 @@ impl Lexer {
 
     fn throw_error_if_unresolved_chars_near_string(&mut self) -> io::Result<()> {
         let current_token = self.tokens.last().unwrap();
-        if !self.tokens.is_empty() && current_token.token_type == TokenType::CharArray {
+
+        if !self.tokens.is_empty() && current_token.is_type(TokenType::CharArray) {
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();
 
