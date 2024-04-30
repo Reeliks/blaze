@@ -19,7 +19,7 @@ impl Token {
 #[derive(Debug, EnumIter, Display, Clone, PartialEq)]
 pub enum TokenType {
     // Directives
-    ImportKeyword,
+    Import
     Query,
     // Conditions
     If,
@@ -41,8 +41,9 @@ pub enum TokenType {
     LessOrEqual,
     // Assignment
     Assign,
-    VariableAssign,
-    FunctionAssign,
+    Variable,
+    Function,
+    Enum
     // Brackets
     LPar,
     RPar,
@@ -69,10 +70,11 @@ pub enum TokenType {
 impl TokenType {
     pub fn regex_str(&self) -> &str {
         match self {
-            TokenType::VariableAssign => r"(?:let|var)[^\w\d]",
-            TokenType::ImportKeyword => r"import[^\w\d]",
-            TokenType::FunctionAssign => r"function[^\w\d]",
+            TokenType::Variable => r"(?:mut|fin)[^\w\d]",
+            TokenType::Import => r"import[^\w\d]",
+            TokenType::Function => r"function[^\w\d]",
             TokenType::Query => r"(?:new|get|set|del)[^\w\d]",
+            TokenType::Enum => r"enum[^\w\d]",
             TokenType::True => r"true[^\w\d]",
             TokenType::False => r"false[^\w\d]",
             TokenType::Null => r"null[^\w\d]",

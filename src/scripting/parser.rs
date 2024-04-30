@@ -1,4 +1,4 @@
-use super::ast::binary_operator_node::BinaryOperatorNode;
+use super::ast::binary_operator_node::{self, BinaryOperatorNode};
 use super::ast::boolean_node::BooleanNode;
 use super::ast::expression_node::ExpressionNode;
 use super::ast::null_node::NullNode;
@@ -75,8 +75,6 @@ impl Parser {
 
     pub fn parse_formula(mut self) -> Result<Box<dyn ExpressionNode>> {
         let left_node: Box<dyn ExpressionNode>;
-        let _right_node: Box<dyn ExpressionNode>;
-        let _operator: BinaryOperatorNode;
         let current_token = self
             .require_token_and_move(FORMULA_TOKENS.to_vec())
             .unwrap();
@@ -110,6 +108,21 @@ impl Parser {
             }
         };
 
-        Ok(left_node)
+        match self.get_current_token_and_move()
+            .token_type {
+            operator if BINARY_OPERATOR_TOKENS.contains(&operator) => {
+                let right_node 
+                    = self.parse_formula()?;
+                let binary_operator_node 
+                    = Box::new(
+                        BinaryOperatorNode::new(
+                        operator, left_node, right_node
+                ));
+                Ok(binary_operator_node)
+            }
+            _ => {
+                Ok(left_node)
+            }
+        }
     }
 }
