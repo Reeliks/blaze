@@ -5,7 +5,7 @@ pub struct VariableNode {
 }
 
 impl VariableNode {
-    pub fn new(name: String ) -> Self {
+    pub fn new(name: String) -> Self {
         VariableNode { name }
     }
 }
