@@ -1,3 +1,4 @@
+use super::ast::binary_operator_node::BinaryOperatorNode;
 use super::ast::boolean_node::BooleanNode;
 use super::ast::expression_node::ExpressionNode;
 use super::ast::null_node::NullNode;
@@ -79,8 +80,10 @@ impl Parser {
         Box::new(StatementsNode { nodes: vec![] })
     }
 
-    pub fn parse_formula (mut self) -> Box<dyn ExpressionNode> {
+    pub fn parse_formula (mut self) -> Result<Box<dyn ExpressionNode>> {
         let left_node: Box<dyn ExpressionNode>;
+        let _right_node: Box<dyn ExpressionNode>;
+        let _operator: BinaryOperatorNode;
         let current_token = self
             .require_token_and_move(FORMULA_TOKENS.to_vec())
             .unwrap();
@@ -104,9 +107,22 @@ impl Parser {
             },
             TokenType::Null => {
                 left_node = Box::new(NullNode);
+            },
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                            "value expected on assignment <= at {}:{}:{}",
+                            self.context.code_source,
+                            current_token.line + 1,
+                            current_token.position + 1
+                        )
+                    )
+                )
             }
-            _ => todo!()
+
         };
-        left_node
+        
+        Ok(left_node)
     }
 }

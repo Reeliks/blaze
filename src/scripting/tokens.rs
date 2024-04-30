@@ -24,6 +24,10 @@ pub enum TokenType {
     // Conditions
     If,
     Else,
+    While,
+    Continue,
+    Break,
+    Return,
     // Binary Operators
     Addition,
     Subtraction,
@@ -74,6 +78,10 @@ impl TokenType {
             TokenType::Null => r"null[^\w\d]",
             TokenType::If => r"if[^\w\d]",
             TokenType::Else => r"else[^\w\d]",
+            TokenType::While => r"while[^\w\d]",
+            TokenType::Continue => r"continue[^\w\d]",
+            TokenType::Break => r"break[^\w\d]",
+            TokenType::Return => r"return[^\w\d]",
             TokenType::Addition => r"\+",
             TokenType::Subtraction => r"-",
             TokenType::Multiplication => r"\*",
