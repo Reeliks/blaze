@@ -32,8 +32,7 @@ impl Lexer {
                         return Ok(self.tokens);
                     }
                     let last_token = self.tokens.last().unwrap();
-                    if !WHITESPACE_TOKENS.contains(&last_token.token_type)
-                    {
+                    if !WHITESPACE_TOKENS.contains(&last_token.token_type) {
                         let start_position =
                             1 + self.context.position - last_token.value.len() as u64;
                         println!(
@@ -83,7 +82,7 @@ impl Lexer {
                 self.context.code_source,
                 self.context.line + 1,
                 self.context.position + 1
-            )
+            ),
         ))
     }
 
@@ -98,10 +97,8 @@ impl Lexer {
             let current_token = self.tokens.last().unwrap();
             let last_token = self.tokens.get(self.tokens.len() - 2).unwrap();
 
-            let current_token_is_alphanumeric =
-                current_token.is_type(TokenType::Alphanumeric);
-            let last_token_is_number =
-                last_token.is_type(TokenType::Number);
+            let current_token_is_alphanumeric = current_token.is_type(TokenType::Alphanumeric);
+            let last_token_is_number = last_token.is_type(TokenType::Number);
             if last_token_is_number && current_token_is_alphanumeric {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -124,7 +121,6 @@ impl Lexer {
         let current_token = self.tokens.last().unwrap();
 
         if !self.tokens.is_empty() && current_token.is_type(TokenType::CharArray) {
-
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();
 

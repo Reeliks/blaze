@@ -85,7 +85,7 @@ impl TokenType {
             TokenType::Addition => r"\+",
             TokenType::Subtraction => r"-",
             TokenType::Multiplication => r"\*",
-            TokenType::Division => r"\/", 
+            TokenType::Division => r"\/",
             TokenType::Assign => r"=",
             TokenType::EqualSign => r"==",
             TokenType::NotEqualSign => r"!=",
@@ -112,28 +112,31 @@ impl TokenType {
     }
 }
 
-pub const WHITESPACE_TOKENS: [TokenType; 4] =
-    [TokenType::NewLine, TokenType::Space, TokenType::Indent, TokenType::Carriage];
+pub const WHITESPACE_TOKENS: [TokenType; 4] = [
+    TokenType::NewLine,
+    TokenType::Space,
+    TokenType::Indent,
+    TokenType::Carriage,
+];
 
 pub const BINARY_OPERATOR_TOKENS: [TokenType; 10] = [
-        TokenType::Addition, 
-        TokenType::Subtraction, 
-        TokenType::Multiplication, 
-        TokenType::Division,
-        TokenType::EqualSign, 
-        TokenType::NotEqualSign, 
-        TokenType::Less, 
-        TokenType::Greater,
-        TokenType::LessOrEqual, 
-        TokenType::GreaterOrEqual 
+    TokenType::Addition,
+    TokenType::Subtraction,
+    TokenType::Multiplication,
+    TokenType::Division,
+    TokenType::EqualSign,
+    TokenType::NotEqualSign,
+    TokenType::Less,
+    TokenType::Greater,
+    TokenType::LessOrEqual,
+    TokenType::GreaterOrEqual,
 ];
 
 pub const FORMULA_TOKENS: [TokenType; 6] = [
-    TokenType::CharArray, 
-    TokenType::Number, 
-    TokenType::Alphanumeric, 
-    TokenType::True, 
+    TokenType::CharArray,
+    TokenType::Number,
+    TokenType::Alphanumeric,
+    TokenType::True,
     TokenType::False,
-    TokenType::Null
+    TokenType::Null,
 ];
-
