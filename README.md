@@ -5,7 +5,7 @@ And of course it's <strong>blazingly fast</strong>
 
 
 ## ✨ Blaze Language Syntax (currently uncompleted)
-1. Manager.blz (used to raise the database with packages included)
+1. Manager.blz (used to raise the database with packages, settings and ispects included)
 ```ruby 
 manage (
     packages = "./packages",
