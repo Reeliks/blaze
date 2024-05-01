@@ -2,15 +2,17 @@ use super::ast::binary_operator_node::BinaryOperatorNode;
 use super::ast::boolean_node::BooleanNode;
 use super::ast::expression_node::ExpressionNode;
 use super::ast::function_node::FunctionNode;
+use super::ast::new_variable_node::NewVariableNode;
 use super::ast::null_node::NullNode;
 use super::ast::number_node::NumberNode;
+use super::ast::object_node::ObjectNode;
 use super::ast::statements_node::StatementsNode;
 use super::ast::string_node::StringNode;
-use super::ast::object_node::ObjectNode;
 use super::ast::variable_node::VariableNode;
-use super::ast::new_variable_node::NewVariableNode;
 use super::context::Context;
-use super::tokens::{Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, VARIABLE_ASSIGNMENT_TOKENS};
+use super::tokens::{
+    Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, VARIABLE_ASSIGNMENT_TOKENS,
+};
 use std::io::{self, Result};
 
 pub struct Parser {
@@ -45,8 +47,8 @@ impl Parser {
         }
         let error_message = format!(
             "{} is expected at position {} <= {}:{}:{}",
-            expected_tokens[0].regex_str(), // Should be replaced with expectred_tokens[0].name(), 
-                                            // but it's not implemented yet
+            expected_tokens[0].regex_str(), // Should be replaced with expectred_tokens[0].name(),
+            // but it's not implemented yet
             self.context.position.clone(),
             self.context.code_source.clone(),
             self.context.line,
@@ -54,7 +56,7 @@ impl Parser {
         );
         Err(io::Error::new(io::ErrorKind::Other, error_message))
     }
-    
+
     pub fn parse(&mut self) -> Result<StatementsNode> {
         let mut root = StatementsNode::new();
         while let Ok(Some(parsed_expression)) = self.parse_expression() {
@@ -66,7 +68,7 @@ impl Parser {
     pub fn parse_expression(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
         let current_token = self.get_current_token_and_move();
         if current_token.is_none() {
-            return Ok(None)
+            return Ok(None);
         };
         let current_token = current_token.unwrap();
 
@@ -134,16 +136,13 @@ impl Parser {
 
     pub fn parse_datatype(&mut self) -> Result<String> {
         let mut datatype: String = "unknown".to_string();
-        let next_token = 
-            self.get_current_token_and_move()
-            .unwrap();
+        let next_token = self.get_current_token_and_move().unwrap();
         if next_token.is_type(TokenType::Colon) {
-            let datatype_token = 
-                self.require_token_and_move(vec![TokenType::Alphanumeric])
+            let datatype_token = self
+                .require_token_and_move(vec![TokenType::Alphanumeric])
                 .unwrap();
             datatype = datatype_token.value;
-        }
-        else {
+        } else {
             self.context.position -= 1;
         }
         Ok(datatype)
@@ -153,23 +152,15 @@ impl Parser {
         let current_token = self
             .require_token_and_move(FORMULA_TOKENS.to_vec())
             .unwrap();
-        
+
         let left_node: Box<dyn ExpressionNode> = match current_token.token_type {
-            TokenType::Alphanumeric => {
-                Box::new(ObjectNode::new(current_token.value))
-            }
-            TokenType::CharArray => {
-                Box::new(StringNode::new(current_token.value))
-            }
-            TokenType::Number => {
-                Box::new(NumberNode::new(current_token.value.parse().unwrap()))
-            }
+            TokenType::Alphanumeric => Box::new(ObjectNode::new(current_token.value)),
+            TokenType::CharArray => Box::new(StringNode::new(current_token.value)),
+            TokenType::Number => Box::new(NumberNode::new(current_token.value.parse().unwrap())),
             TokenType::True | TokenType::False => {
                 Box::new(BooleanNode::new(current_token.token_type).unwrap())
             }
-            TokenType::Null => {
-                Box::new(NullNode)
-            }
+            TokenType::Null => Box::new(NullNode),
             _ => {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -183,22 +174,14 @@ impl Parser {
             }
         };
 
-        match self.get_current_token_and_move()
-            .unwrap()
-            .token_type {
+        match self.get_current_token_and_move().unwrap().token_type {
             operator if BINARY_OPERATOR_TOKENS.contains(&operator) => {
-                let right_node 
-                    = self.parse_formula()?;
-                let binary_operator_node 
-                    = Box::new(
-                        BinaryOperatorNode::new(
-                        operator, left_node, right_node
-                ));
+                let right_node = self.parse_formula()?;
+                let binary_operator_node =
+                    Box::new(BinaryOperatorNode::new(operator, left_node, right_node));
                 Ok(binary_operator_node)
             }
-            _ => {
-                Ok(left_node)
-            }
+            _ => Ok(left_node),
         }
     }
 }
