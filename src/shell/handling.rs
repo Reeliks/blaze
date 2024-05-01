@@ -2,6 +2,7 @@ use std::io::{self, Result};
 
 use crate::db::create_db;
 use crate::scripting::lexer;
+use crate::server::server_bz;
 
 pub fn handle_command_arguments() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -9,6 +10,7 @@ pub fn handle_command_arguments() -> Result<()> {
         match args[1].as_str() {
             "create" => create_db_with_console()?,
             "lexer" => analyze_lexically()?,
+            "run" => server_bz::server_run(),
             _ => {
                 eprintln!("Invalid arguments");
                 std::process::exit(1);
@@ -24,7 +26,8 @@ fn print_help_section() {
     let help_list = r#"Blaze Db 0.0.1a
     Available commands:
     lexer   - try the first version of Blaze Language Lexer
-    create  - create a new datablaze"#;
+    create  - create a new datablaze
+    run     - start server"#;
     println!("{}", help_list);
 }
 
