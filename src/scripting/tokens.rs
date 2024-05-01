@@ -18,9 +18,10 @@ impl Token {
 // below in order to make sure the lexer recognizes tokens properly.
 #[derive(Debug, EnumIter, Display, Clone, PartialEq)]
 pub enum TokenType {
-    // Directives
-    Import
-    Query,
+    Import,
+    Manage,
+    Attach,
+    Inspect,
     // Conditions
     If,
     Else,
@@ -28,6 +29,9 @@ pub enum TokenType {
     Continue,
     Break,
     Return,
+    // Unary Operators
+    Increment,
+    Decrement,
     // Binary Operators
     Addition,
     Subtraction,
@@ -39,11 +43,13 @@ pub enum TokenType {
     Less,
     GreaterOrEqual,
     LessOrEqual,
+    Hat,
     // Assignment
     Assign,
-    Variable,
+    Mut,
+    Fin,
     Function,
-    Enum
+    Enum,
     // Brackets
     LPar,
     RPar,
@@ -70,20 +76,25 @@ pub enum TokenType {
 impl TokenType {
     pub fn regex_str(&self) -> &str {
         match self {
-            TokenType::Variable => r"(?:mut|fin)[^\w\d]",
-            TokenType::Import => r"import[^\w\d]",
-            TokenType::Function => r"function[^\w\d]",
-            TokenType::Query => r"(?:new|get|set|del)[^\w\d]",
+            TokenType::If => r"if[^\w\d]",
+            TokenType::Mut => r"mut[^\w\d]",
+            TokenType::Fin => r"fin[^\w\d]",
             TokenType::Enum => r"enum[^\w\d]",
             TokenType::True => r"true[^\w\d]",
             TokenType::False => r"false[^\w\d]",
             TokenType::Null => r"null[^\w\d]",
-            TokenType::If => r"if[^\w\d]",
             TokenType::Else => r"else[^\w\d]",
             TokenType::While => r"while[^\w\d]",
+            TokenType::Import => r"import[^\w\d]",
+            TokenType::Manage => r"manage[^\w\d]",
+            TokenType::Attach => r"attach[^\w\d]",
+            TokenType::Inspect => r"inspect[^\w\d]",
+            TokenType::Function => r"function[^\w\d]",
             TokenType::Continue => r"continue[^\w\d]",
             TokenType::Break => r"break[^\w\d]",
             TokenType::Return => r"return[^\w\d]",
+            TokenType::Increment => r"++",
+            TokenType::Decrement => r"--",
             TokenType::Addition => r"\+",
             TokenType::Subtraction => r"-",
             TokenType::Multiplication => r"\*",
@@ -95,6 +106,7 @@ impl TokenType {
             TokenType::Less => r"<",
             TokenType::GreaterOrEqual => r">=",
             TokenType::LessOrEqual => r"<=",
+            TokenType::Hat => r"^",
             TokenType::LPar => r"\(",
             TokenType::RPar => r"\)",
             TokenType::LBracket => r"\{",
@@ -121,7 +133,7 @@ pub const WHITESPACE_TOKENS: [TokenType; 4] = [
     TokenType::Carriage,
 ];
 
-pub const BINARY_OPERATOR_TOKENS: [TokenType; 10] = [
+pub const BINARY_OPERATOR_TOKENS: [TokenType; 11] = [
     TokenType::Addition,
     TokenType::Subtraction,
     TokenType::Multiplication,
@@ -132,7 +144,10 @@ pub const BINARY_OPERATOR_TOKENS: [TokenType; 10] = [
     TokenType::Greater,
     TokenType::LessOrEqual,
     TokenType::GreaterOrEqual,
+    TokenType::Hat,
 ];
+
+pub const UNARY_OPERATOR_TOKENS: [TokenType; 2] = [TokenType::Increment, TokenType::Decrement];
 
 pub const FORMULA_TOKENS: [TokenType; 6] = [
     TokenType::CharArray,
@@ -142,3 +157,5 @@ pub const FORMULA_TOKENS: [TokenType; 6] = [
     TokenType::False,
     TokenType::Null,
 ];
+
+pub const VARIABLE_ASSIGNMENT_TOKENS: [TokenType; 2] = [TokenType::Mut, TokenType::Fin];
