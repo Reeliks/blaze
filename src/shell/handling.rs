@@ -1,3 +1,4 @@
+use crate::scripting::tokens::Token;
 use std::io::{self, Result};
 
 use crate::db::create_db;
@@ -8,7 +9,9 @@ pub fn handle_command_arguments() -> Result<()> {
     if args.len() == 2 {
         match args[1].as_str() {
             "create" => create_db_with_console()?,
-            "lexer" => analyze_lexically()?,
+            "lexer" => {
+                analyze_lexically()?;
+            }
             _ => {
                 eprintln!("Invalid arguments");
                 std::process::exit(1);
@@ -23,7 +26,7 @@ pub fn handle_command_arguments() -> Result<()> {
 fn print_help_section() {
     let help_list = r#"Blaze Db 0.0.1a
     Available commands:
-    lexer   - try the first version of Blaze Language Lexer
+    parser  - try the first version of Blaze Language Lexer
     create  - create a new datablaze"#;
     println!("{}", help_list);
 }
@@ -37,7 +40,7 @@ pub fn create_db_with_console() -> Result<()> {
     Ok(())
 }
 
-fn analyze_lexically() -> Result<()> {
+fn analyze_lexically() -> Result<Vec<Token>> {
     let mut code_to_parse = String::new();
     std::io::stdin().read_line(&mut code_to_parse)?;
     code_to_parse = code_to_parse.trim().to_string();
@@ -46,7 +49,5 @@ fn analyze_lexically() -> Result<()> {
     code_lexer
         .get_context()
         .set_code_source("Shell".to_string());
-    code_lexer.analyze()?;
-
-    Ok(())
+    Ok(code_lexer.analyze().unwrap())
 }
