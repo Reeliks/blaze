@@ -26,10 +26,10 @@ attach "./data";
 package scheme;
 
 enum Gender: str {
-    male, 
-    female, 
-    other,
-    unspecified
+    Male, 
+    Female, 
+    Other,
+    Unspecified
 };
 
 enum TargetAudience: str {
@@ -50,7 +50,7 @@ table accounts: uuid {
     name: str <=30 = format("User{}", self.id),
     bio: str <=200,
     password: str,
-    gender: Gender = Gender.unspecified,
+    gender: Gender = Gender.Unspecified,
     age: int >0 <100,
     country: &countries?,
     created_at: datetime = "now";
