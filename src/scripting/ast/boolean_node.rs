@@ -13,12 +13,10 @@ impl BooleanNode {
         match token_type {
             TokenType::True => Ok(BooleanNode { state: true }),
             TokenType::False => Ok(BooleanNode { state: false }),
-            _ => {
-                Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Invalid value for a boolean node",
-                ))
-            }
+            _ => Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Invalid value for a boolean node",
+            )),
         }
     }
 }
