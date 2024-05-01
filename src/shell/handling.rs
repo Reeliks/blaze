@@ -26,7 +26,7 @@ pub fn handle_command_arguments() -> Result<()> {
 fn print_help_section() {
     let help_list = r#"Blaze Db 0.0.1a
     Available commands:
-    parser  - try the first version of Blaze Language Lexer
+    lexer  - try the first version of Blaze Language Lexer
     create  - create a new datablaze"#;
     println!("{}", help_list);
 }
