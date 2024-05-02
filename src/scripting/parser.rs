@@ -42,17 +42,14 @@ impl Parser {
             let current_token = self.tokens[self.parser_position as usize].clone();
             // There is no reason to start line and position variables from zero
             // since a parser is not supposed to work with code, but with tokens instead.
-            return Ok(current_token)
+            return Ok(current_token);
         }
-        Err(io::Error::new(
-            io::ErrorKind::Other, 
-            "Stack overflow"
-        ).into())
+        Err(io::Error::new(io::ErrorKind::Other, "Stack overflow"))
     }
 
     pub fn move_position(&mut self) -> Result<()> {
         let current_token = self.get_current_token().unwrap();
-        self.parser_position += 1; 
+        self.parser_position += 1;
         self.context.line = current_token.line + 1;
         self.context.position = current_token.position + 1;
         Ok(())
@@ -60,14 +57,15 @@ impl Parser {
 
     pub fn require_token(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
         let current_token = self.get_current_token();
-        if !current_token.is_err() 
-            && expected_tokens.contains(&current_token.as_ref().unwrap().token_type) {
-            return Ok(current_token?);
+        if current_token.is_ok()
+            && expected_tokens.contains(&current_token.as_ref().unwrap().token_type)
+        {
+            return current_token
         }
         self.raise_expected_tokens_error(expected_tokens)?;
         current_token
     }
-    
+
     pub fn raise_expected_tokens_error(&mut self, expected_tokens: Vec<TokenType>) -> Result<()> {
         let error_message = "Syntax Error: ".to_owned()
             + &match &expected_tokens[..] {
@@ -104,16 +102,15 @@ impl Parser {
         while let Ok(Some(parsed_expression)) = self.parse_expression() {
             if self.parser_position < self.tokens.len() as u64 {
                 self.require_token(vec![TokenType::ExpressionEnd])?;
-            } 
+            }
             root.add_node(parsed_expression);
-            break;
         }
         Ok(root)
     }
 
     pub fn parse_expression(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
         let current_token = self.get_current_token();
-        if !current_token.is_ok() {
+        if current_token.is_err() {
             return Ok(None);
         };
 
@@ -160,7 +157,7 @@ impl Parser {
                     self.require_token(vec![TokenType::Alphanumeric])
                     .unwrap();
                 self.move_position()?;
-                let arguments 
+                let arguments
                     = self.parse_function_arguments()?;
                 self.move_position()?;
                 let datatype = self.parse_datatype();
@@ -207,10 +204,8 @@ impl Parser {
         }
         if next_token?.is_type(TokenType::Colon) {
             self.move_position()?;
-            let datatype_token = self
-                .require_token(vec![TokenType::Alphanumeric])
-                .unwrap();
-            return Ok(Some(datatype_token.value))
+            let datatype_token = self.require_token(vec![TokenType::Alphanumeric]).unwrap();
+            return Ok(Some(datatype_token.value));
         };
         Ok(None)
     }
@@ -221,8 +216,7 @@ impl Parser {
         loop {
             self.move_position()?;
             let current_token = self.get_current_token().unwrap();
-            if !arguments.is_empty() && current_token.is_type(TokenType::Comma) 
-            {
+            if !arguments.is_empty() && current_token.is_type(TokenType::Comma) {
                 self.move_position()?;
                 self.require_token(vec![TokenType::Alphanumeric])?;
                 println!("suceed");
@@ -243,7 +237,7 @@ impl Parser {
                     arguments.push(FunctionArgument::new(
                         current_token.value,
                         argument_datatype.unwrap(),
-                    )); 
+                    ));
                 }
                 TokenType::RPar => {
                     break;
@@ -261,23 +255,15 @@ impl Parser {
         }
         Ok(arguments)
     }
-    
+
     pub fn parse_passed_arguments(&mut self) -> Result<Vec<PassedArgument>> {
         todo!()
     }
 
     pub fn parse_formula(&mut self) -> Result<Box<dyn ExpressionNode>> {
-        let current_token = self
-            .require_token(FORMULA_TOKENS.to_vec())
-            .unwrap();
+        let current_token = self.require_token(FORMULA_TOKENS.to_vec()).unwrap();
         let left_node: Box<dyn ExpressionNode> = match current_token.token_type {
-            TokenType::Alphanumeric => {
-                // self.move_position()?;
-                // if self.get_current_token()?.is_type(TokenType::LPar) {
-                //      
-                // };
-                Box::new(ObjectNode::new(current_token.value))
-            },
+            TokenType::Alphanumeric => Box::new(ObjectNode::new(current_token.value)),
             TokenType::CharArray => Box::new(StringNode::new(current_token.value)),
             TokenType::Number => Box::new(NumberNode::new(current_token.value.parse().unwrap())),
             TokenType::True | TokenType::False => {
@@ -295,7 +281,7 @@ impl Parser {
                     ),
                 ));
             }
-        }; 
+        };
         match self.get_current_token().unwrap().token_type {
             operator if BINARY_OPERATOR_TOKENS.contains(&operator) => {
                 self.move_position()?;
