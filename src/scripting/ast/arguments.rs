@@ -17,16 +17,13 @@ impl FunctionArgument {
 
 pub struct PassedArgument {
     name: Option<String>,
-    value: Box<dyn ExpressionNode>
+    value: Box<dyn ExpressionNode>,
 }
 
 impl PassedArgument {
     pub fn new(name: Option<String>, value: Box<dyn ExpressionNode>) -> Self {
-        PassedArgument {
-            name, value
-        } 
+        PassedArgument { name, value }
     }
 }
 
 impl Argument for PassedArgument {}
-

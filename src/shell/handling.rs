@@ -11,7 +11,7 @@ pub fn handle_command_arguments() -> Result<()> {
             "create" => create_db_with_console()?,
             "lexer" => {
                 analyze_lexically()?;
-            },
+            }
             "parser" => {
                 analyze_syntatically()?;
             }
@@ -65,6 +65,6 @@ fn analyze_syntatically() -> Result<()> {
     let nodes = code_parser.parse();
     for _node in &nodes {
         println!("{:#?}", "new node");
-    };
+    }
     Ok(())
 }
