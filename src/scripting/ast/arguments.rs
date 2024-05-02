@@ -1,3 +1,5 @@
+use super::expression_node::ExpressionNode;
+
 pub trait Argument {}
 
 pub struct FunctionArgument {
@@ -13,7 +15,18 @@ impl FunctionArgument {
     }
 }
 
-pub enum ArgumentType {
-    Function,
-    Table,
+pub struct PassedArgument {
+    name: Option<String>,
+    value: Box<dyn ExpressionNode>
 }
+
+impl PassedArgument {
+    pub fn new(name: Option<String>, value: Box<dyn ExpressionNode>) -> Self {
+        PassedArgument {
+            name, value
+        } 
+    }
+}
+
+impl Argument for PassedArgument {}
+

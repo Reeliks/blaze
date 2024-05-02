@@ -47,6 +47,7 @@ name = "blaze"
 version = "0.1.0"
 dependencies = [
  "bson",
+ "rand",
  "regex",
  "strum",
  "strum_macros",
