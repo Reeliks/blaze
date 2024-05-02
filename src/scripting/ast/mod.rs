@@ -1,3 +1,4 @@
+pub mod arguments;
 pub mod binary_operator_node;
 pub mod boolean_node;
 pub mod expression_node;

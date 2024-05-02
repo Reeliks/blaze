@@ -29,6 +29,7 @@ impl Lexer {
             match self.recognize_next_token() {
                 Ok(proceed_parsing) => {
                     if !proceed_parsing {
+                        self.tokens.retain(|token| !token.is_type(TokenType::Space));
                         return Ok(self.tokens);
                     }
                     let last_token = self.tokens.last().unwrap();
@@ -56,8 +57,8 @@ impl Lexer {
         };
         let positioned_code = &self.code[self.context.position as usize..];
         for token_type in TokenType::iter() {
-            let token_regex =
-                Regex::new(format!("^{}", TokenType::regex_str(&token_type)).as_str()).unwrap();
+            let token_regex_string = TokenType::regex_str(&token_type);
+            let token_regex = Regex::new(&format!(r#"^{}"#, token_regex_string)).unwrap();
             if let Some(matches) = token_regex.find(positioned_code) {
                 let matched_str = matches.as_str();
                 self.tokens.push(Token {

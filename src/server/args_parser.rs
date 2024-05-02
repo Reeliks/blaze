@@ -28,9 +28,9 @@ impl Args {
             };
 
             match str.as_str() {
-                "-ip" => ip = value.clone(),
-                "-port" => port = value.clone(),
-                "-blz_file" => blz_file = value.clone(),
+                "-ip" => ip.clone_from(&value),
+                "-port" => port.clone_from(&value),
+                "-blz_file" => blz_file.clone_from(&value),
                 _ => (),
             }
         }
