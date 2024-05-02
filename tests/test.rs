@@ -1,5 +1,7 @@
 use blaze::scripting::lexer::Lexer;
 use blaze::scripting::tokens::TokenType;
+use blaze::scripting::parser::Parser;
+use blaze::db::create_db;
 
 #[test]
 fn test_lexer() {
@@ -20,4 +22,27 @@ fn test_lexer() {
         .collect();
 
     assert_eq!(actual_token_types, expected_tokens);
+}
+
+fn parser(code: String) -> bool {
+    let code_lexer = Lexer::new(code);
+    let actual_tokens_result = code_lexer.analyze().unwrap();
+
+    let mut code_parser = Parser::new(actual_tokens_result);
+    let nodes = code_parser.parse();
+
+    nodes.is_err()
+}
+
+#[test]
+fn test_parser() {
+    assert!(parser("fin country_id = 1".to_string()));
+    assert!(parser("fifn country_id = 1".to_string()));
+}
+
+
+#[test]
+fn test_cteate_db() {
+    let is_create = create_db::create_db_structure("./db".trim(), true).is_ok();
+    assert!(is_create);
 }
