@@ -37,7 +37,7 @@ fn parser(code: String) -> std::io::Result<bool> {
 #[test]
 fn test_parser() {
     assert!(parser("fin country_id = 1".to_string()).unwrap());
-    assert!(parser("fifn country_id = 1".to_string()).unwrap());
+    assert!(parser("fin country_id = 1".to_string()).unwrap());
 }
 
 #[test]
