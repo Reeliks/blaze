@@ -48,7 +48,7 @@ impl Parser {
     }
 
     pub fn move_position(&mut self) -> Result<()> {
-        let current_token = self.get_current_token().unwrap();
+        let current_token = self.get_current_token()?;
         self.parser_position += 1;
         self.context.line = current_token.line + 1;
         self.context.position = current_token.position + 1;
@@ -60,7 +60,7 @@ impl Parser {
         if current_token.is_ok()
             && expected_tokens.contains(&current_token.as_ref().unwrap().token_type)
         {
-            return current_token
+            return current_token;
         }
         self.raise_expected_tokens_error(expected_tokens)?;
         current_token
@@ -114,29 +114,28 @@ impl Parser {
             return Ok(None);
         };
 
-        let current_token = current_token.unwrap();
+        let current_token = current_token?;
         self.move_position()?;
         match current_token.token_type {
             // NewVariableNode: fin my_variable: int = 5;
             // VariableNode: my_variable = 5;
             x if VARIABLE_ASSIGNMENT_TOKENS.contains(&x) => {
                 let variable_token
-                    = self.require_token(vec![TokenType::Alphanumeric])
-                    .unwrap();
+                    = self.require_token(vec![TokenType::Alphanumeric])?;
                 self.move_position()?;
-                let datatype = self.parse_datatype().unwrap();
+                let datatype = self.parse_datatype()?;
                 if datatype.is_some() {
                     self.move_position()?
                 };
                 self.require_token(vec![TokenType::Assign])
-                    .unwrap();
+                    ?;
                 self.move_position()?;
                 Ok(Some(
                     Box::new(
                         NewVariableNode::new(
                         variable_token.value,
                         datatype,
-                        self.parse_formula().unwrap()
+                        self.parse_formula()?
                     ))
                 ))
             }
@@ -148,7 +147,7 @@ impl Parser {
                     Box::new(
                         VariableNode::new(
                         current_token.value,
-                        self.parse_formula().unwrap(),
+                        self.parse_formula()?,
                     ))
                 ))
             }
@@ -177,7 +176,7 @@ impl Parser {
                     Box::new(
                         FunctionNode::new(
                         name_token.value,
-                        datatype.unwrap(),
+                        datatype?,
                         arguments
                     ))
                 ))
@@ -204,7 +203,7 @@ impl Parser {
         }
         if next_token?.is_type(TokenType::Colon) {
             self.move_position()?;
-            let datatype_token = self.require_token(vec![TokenType::Alphanumeric]).unwrap();
+            let datatype_token = self.require_token(vec![TokenType::Alphanumeric])?;
             return Ok(Some(datatype_token.value));
         };
         Ok(None)
@@ -212,10 +211,10 @@ impl Parser {
 
     pub fn parse_function_arguments(&mut self) -> Result<Vec<FunctionArgument>> {
         let mut arguments: Vec<FunctionArgument> = vec![];
-        self.require_token(vec![TokenType::LPar]).unwrap();
+        self.require_token(vec![TokenType::LPar])?;
         loop {
             self.move_position()?;
-            let current_token = self.get_current_token().unwrap();
+            let current_token = self.get_current_token()?;
             if !arguments.is_empty() && current_token.is_type(TokenType::Comma) {
                 self.move_position()?;
                 self.require_token(vec![TokenType::Alphanumeric])?;
@@ -224,7 +223,7 @@ impl Parser {
             match current_token.token_type {
                 TokenType::Alphanumeric => {
                     self.move_position()?;
-                    let argument_datatype = self.parse_datatype().unwrap();
+                    let argument_datatype = self.parse_datatype()?;
                     if argument_datatype.is_none() {
                         return Err(io::Error::new(
                             io::ErrorKind::Other,
@@ -261,13 +260,13 @@ impl Parser {
     }
 
     pub fn parse_formula(&mut self) -> Result<Box<dyn ExpressionNode>> {
-        let current_token = self.require_token(FORMULA_TOKENS.to_vec()).unwrap();
+        let current_token = self.require_token(FORMULA_TOKENS.to_vec())?;
         let left_node: Box<dyn ExpressionNode> = match current_token.token_type {
             TokenType::Alphanumeric => Box::new(ObjectNode::new(current_token.value)),
             TokenType::CharArray => Box::new(StringNode::new(current_token.value)),
             TokenType::Number => Box::new(NumberNode::new(current_token.value.parse().unwrap())),
             TokenType::True | TokenType::False => {
-                Box::new(BooleanNode::new(current_token.token_type).unwrap())
+                Box::new(BooleanNode::new(current_token.token_type)?)
             }
             TokenType::Null => Box::new(NullNode),
             _ => {
@@ -282,7 +281,7 @@ impl Parser {
                 ));
             }
         };
-        match self.get_current_token().unwrap().token_type {
+        match self.get_current_token()?.token_type {
             operator if BINARY_OPERATOR_TOKENS.contains(&operator) => {
                 self.move_position()?;
                 let right_node = self.parse_formula()?;
