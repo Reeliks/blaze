@@ -95,7 +95,7 @@ impl Parser {
     }
 
     pub fn move_position(&mut self) -> Result<()> {
-        let current_token = self.get_current_token().unwrap();
+        let current_token = self.get_current_token()?;
         self.parser_position += 1;
         self.context.line = current_token.line + 1;
         self.context.position = current_token.position + 1;
@@ -124,7 +124,7 @@ impl Parser {
                     .unwrap()
                     .is_type(x))
         {
-            return current_token
+            return current_token;
         }
         self.raise_expected_tokens_error(expected_tokens)?;
         current_token
@@ -190,7 +190,7 @@ impl Parser {
             x if FORMULA_TOKENS.contains(&x) => {
                 self.move_position_back();
                 let formula_node = self.parse_formula()?;
-                Ok(Some(formula_node))
+                Ok(Some(formula_node));   
             }
             TokenType::Function => {
                 let name_token =
@@ -252,7 +252,6 @@ impl Parser {
             }
             self.move_position()?;
             let mut current_token = self.get_current_token().unwrap();
-
             if !arguments.is_empty() && current_token.is_type(TokenType::Comma) {
                 self.move_position()?;
                 current_token = self.require_token(vec![TokenType::Alphanumeric])?;
@@ -261,7 +260,7 @@ impl Parser {
             match current_token.token_type {
                 TokenType::Alphanumeric => {
                     self.move_position()?;
-                    let argument_datatype = self.parse_datatype().unwrap();
+                    let argument_datatype = self.parse_datatype()?;
                     if argument_datatype.is_none() {
                         return Err(io::Error::new(
                             io::ErrorKind::Other,
@@ -306,7 +305,7 @@ impl Parser {
     }
 
     pub fn parse_formula(&mut self) -> Result<Box<dyn ExpressionNode>> {
-        let current_token = self.require_token(FORMULA_TOKENS.to_vec()).unwrap();
+        let current_token = self.require_token(FORMULA_TOKENS.to_vec())?;
         let left_node: Box<dyn ExpressionNode> = match current_token.token_type {
             TokenType::Alphanumeric => Box::new(ObjectNode::new(current_token.value)),
             TokenType::CharArray => Box::new(StringNode::new(current_token.value)),
