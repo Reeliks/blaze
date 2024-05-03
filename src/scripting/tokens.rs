@@ -145,7 +145,7 @@ pub const BINARY_OPERATOR_TOKENS: [TokenType; 12] = [
     TokenType::LessOrEqual,
     TokenType::GreaterOrEqual,
     TokenType::Hat,
-    TokenType::Assign
+    TokenType::Assign,
 ];
 
 pub const UNARY_OPERATOR_TOKENS: [TokenType; 2] = [TokenType::Increment, TokenType::Decrement];
