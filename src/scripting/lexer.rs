@@ -79,14 +79,11 @@ impl Lexer {
         Err(io::Error::new(
             io::ErrorKind::Other,
             format!(
-                "{}{}", "Lexical Error",
-                format!(
-                    "\"{}\" token isn't recognized <-= at {}:{}:{}",
-                    positioned_code,
-                    self.context.code_source,
-                    self.context.line + 1,
-                    self.context.position + 1
-                )
+                "Lexical Error \"{}\" token isn't recognized <-= at {}:{}:{}",
+                positioned_code,
+                self.context.code_source,
+                self.context.line + 1,
+                self.context.position + 1
             ),
         ))
     }
@@ -108,15 +105,13 @@ impl Lexer {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!(
-                        "{}{}", "Lexical Error".bright_red(),
-                        format!(
-                            "\n\"{}{}\": numbers cannot end with alphanumeric <-= at {}:{}:{}",
-                            last_token.value,
-                            current_token.value,
-                            self.context.code_source,
-                            last_token.line + 1,
-                            last_token.position + 1
-                        )
+                        "{}\n\"{}{}\": numbers cannot end with alphanumeric <-= at {}:{}:{}",
+                        "Lexical Error".bright_red(),
+                        last_token.value,
+                        current_token.value,
+                        self.context.code_source,
+                        last_token.line + 1,
+                        last_token.position + 1
                     )
                     .to_string(),
                 ));
@@ -148,14 +143,12 @@ impl Lexer {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
                         format!(
-                            "{}{}", "Lexical Error".bright_red(),
-                            format!(
-                                ": \"{}\" near a string with no space between <-= at {}:{}:{}",
-                                char_before,
-                                self.context.code_source,
-                                current_token.line + 1,
-                                char_before_index + 1
-                            )
+                            "{}: \"{}\" near a string with no space between <-= at {}:{}:{}",
+                            "Lexical Error".bright_red(),
+                            char_before,
+                            self.context.code_source,
+                            current_token.line + 1,
+                            char_before_index + 1
                         ),
                     ));
                 }
@@ -171,14 +164,12 @@ impl Lexer {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
                         format!(
-                            "{}{}", "Lexical Error".bright_red(),
-                            format!(
-                                ": \"{}\" after a string with no space between <-= at {}:{}:{}",
-                                char_after,
-                                self.context.code_source,
-                                current_token.line + 1,
-                                char_after_index + 1
-                            )
+                            "{}: \"{}\" after a string with no space between <-= at {}:{}:{}",
+                            "Lexical Error".bright_red(),
+                            char_after,
+                            self.context.code_source,
+                            current_token.line + 1,
+                            char_after_index + 1
                         ),
                     ));
                 }

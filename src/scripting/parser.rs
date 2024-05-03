@@ -1,5 +1,5 @@
-use rand::seq::SliceRandom;
 use colored::*;
+use rand::seq::SliceRandom;
 
 use super::ast::arguments::{FunctionArgument, PassedArgument};
 use super::ast::binary_operator_node::BinaryOperatorNode;
@@ -18,7 +18,6 @@ use super::tokens::{
 };
 use std::io::{self, Result};
 
-
 pub struct Parser {
     tokens: Vec<Token>,
     context: Context,
@@ -36,47 +35,40 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<StatementsNode> {
         let mut root = StatementsNode::new();
-        let mut add_node 
-            = |node: Box<dyn ExpressionNode>| {
+        let mut add_node = |node: Box<dyn ExpressionNode>| {
             root.add_node(node);
         };
         loop {
-            let parsed_expression
-                = self.parse_expression();
+            let parsed_expression = self.parse_expression();
             match parsed_expression {
                 Ok(Some(..)) => {
-                    let parsed_expression
-                        = parsed_expression?;
+                    let parsed_expression = parsed_expression?;
                     add_node(parsed_expression.unwrap());
                     if self.is_position_movable() {
                         self.move_position()?;
-                        let semicolon_required = 
-                            self.require_token(vec![TokenType::ExpressionEnd]);
+                        let semicolon_required = self.require_token(vec![TokenType::ExpressionEnd]);
                         if semicolon_required.is_err() {
                             let err = semicolon_required.unwrap_err();
                             println!("{}", err);
-                            return Ok(StatementsNode::new())
+                            return Ok(StatementsNode::new());
                         };
                     };
                     if self.is_position_movable() {
                         self.move_position()?
-                    }
-                    else {
-                        break
+                    } else {
+                        break;
                     }
                 }
-                Ok(None) => {
-                    break
-                }
+                Ok(None) => break,
                 Err(e) => {
                     println!("{}", e);
-                    return Ok(StatementsNode::new())
+                    return Ok(StatementsNode::new());
                 }
             }
         }
         Ok(root)
     }
-    
+
     pub fn get_context(&mut self) -> &mut Context {
         &mut self.context
     }
@@ -90,7 +82,11 @@ impl Parser {
         }
         Err(io::Error::new(
             io::ErrorKind::Other,
-            format!("{}{}", "FATAL".bright_red(), "Attempted to access a non-existent token"),
+            format!(
+                "{}{}",
+                "FATAL".bright_red(),
+                "Attempted to access a non-existent token"
+            ),
         ))
     }
 
@@ -116,13 +112,10 @@ impl Parser {
     pub fn require_token(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
         let current_token = self.get_current_token();
         if current_token.is_ok()
-            && expected_tokens.clone()
+            && expected_tokens
+                .clone()
                 .into_iter()
-                .any(|x| 
-                    current_token
-                    .as_ref()
-                    .unwrap()
-                    .is_type(x))
+                .any(|x| current_token.as_ref().unwrap().is_type(x))
         {
             return current_token;
         }
@@ -131,8 +124,10 @@ impl Parser {
     }
 
     pub fn raise_expected_tokens_error(&mut self, expected_tokens: Vec<TokenType>) -> Result<()> {
-        let error_message = format!("{}{}{}{}", 
-            "Syntax Error".to_owned().bright_red(), ": ",
+        let error_message = format!(
+            "{}{}{}{}",
+            "Syntax Error".to_owned().bright_red(),
+            ": ",
             &match &expected_tokens[..] {
                 [] => "void".to_string(),
                 [first] => format!("'{}' is", first),
@@ -152,18 +147,20 @@ impl Parser {
                         shuffled_tokens.len() - 3
                     )
                 }
-            }, &format!(
+            },
+            &format!(
                 " expected <-= {}:{}:{}",
                 self.context.code_source.clone(),
                 self.context.line,
                 self.context.position
-            ));
+            )
+        );
         Err(io::Error::new(io::ErrorKind::Other, error_message))
     }
 
     pub fn parse_expression(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
         if self.get_current_token().is_err() {
-            return Ok(None)
+            return Ok(None);
         };
         let current_token = self.get_current_token()?;
         self.move_position()?;
@@ -218,16 +215,14 @@ impl Parser {
             _ => {
                 Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("{}{}",
-                        "Syntax Error".bright_red(),
                         format!(
-                            ": {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
+                            "{}: {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
+                            "Syntax Error".bright_red(),
                             current_token.token_type,
                             self.context.code_source,
                             self.context.line,
                             self.context.position
                         )
-                    )
                 ))
             }
         }
@@ -265,13 +260,12 @@ impl Parser {
                     if argument_datatype.is_none() {
                         return Err(io::Error::new(
                             io::ErrorKind::Other,
-                            format!("{}{}",
+                            format!(
+                                "{}: Argument type is expected <-= {}:{}:{}",
                                 "Syntax Error".bright_red(),
-                                format!(": Argument type is expected <-= {}:{}:{}",
-                                    self.context.code_source, 
-                                    self.context.line, 
-                                    self.context.position
-                                )
+                                self.context.code_source,
+                                self.context.line,
+                                self.context.position
                             ),
                         ));
                     };
@@ -286,13 +280,12 @@ impl Parser {
                 _ => {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
-                        format!("{}{}",
+                        format!(
+                            "{}: Argument expected <-= {}:{}:{}",
                             "Syntax Error".bright_red(),
-                            format!(": Argument expected <-= {}:{}:{}",
-                                self.context.code_source, 
-                                self.context.line, 
-                                self.context.position
-                            )
+                            self.context.code_source,
+                            self.context.line,
+                            self.context.position
                         ),
                     ));
                 }
@@ -314,16 +307,16 @@ impl Parser {
             TokenType::Null => Box::new(NullNode),
             TokenType::True | TokenType::False => {
                 Box::new(BooleanNode::new(current_token.token_type).unwrap())
-            },
+            }
             _ => {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("{}{}", "Syntax Error".bright_red(),
-                        format!(": Value expected on assignment <-= at {}:{}:{}",
-                            self.context.code_source,
-                            current_token.line + 1,
-                            current_token.position + 1
-                        )
+                    format!(
+                        "{}: Value expected on assignment <-= at {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        self.context.code_source,
+                        current_token.line + 1,
+                        current_token.position + 1
                     ),
                 ));
             }
