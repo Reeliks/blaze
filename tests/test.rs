@@ -31,7 +31,7 @@ fn parser(code: String) -> std::io::Result<bool> {
     let mut code_parser = Parser::new(actual_tokens_result);
     let nodes = code_parser.parse();
 
-    Ok(nodes.is_err())
+    Ok(nodes.is_ok())
 }
 
 #[test]
