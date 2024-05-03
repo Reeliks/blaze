@@ -55,7 +55,7 @@ impl Parser {
                         if semicolon_required.is_err() {
                             let err = semicolon_required.unwrap_err();
                             println!("{}", err);
-                            return Ok(root)
+                            return Ok(StatementsNode::new())
                         };
                     };
                     if self.is_position_movable() {
@@ -70,7 +70,7 @@ impl Parser {
                 }
                 Err(e) => {
                     println!("{}", e);
-                    return Ok(root)
+                    return Ok(StatementsNode::new())
                 }
             }
         }

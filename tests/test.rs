@@ -26,12 +26,12 @@ fn test_lexer() {
 
 fn parser(code: String) -> std::io::Result<bool> {
     let code_lexer = Lexer::new(code);
-    let actual_tokens_result = code_lexer.analyze()?;
+    let tokens = code_lexer.analyze()?;
 
-    let mut code_parser = Parser::new(actual_tokens_result);
+    let mut code_parser = Parser::new(tokens.clone());
     let nodes = code_parser.parse();
 
-    Ok(nodes.is_ok())
+    Ok(nodes.is_ok() && !nodes?.nodes.is_empty() && !tokens.is_empty())
 }
 
 #[test]

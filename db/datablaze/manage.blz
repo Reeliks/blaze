@@ -1,0 +1,7 @@
+manage (
+    tmax_connections = 3,
+    work_dir = "/",
+    backups_dir = "backups/"
+);
+
+attach "/data/main;
