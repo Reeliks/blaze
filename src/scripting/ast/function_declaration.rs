@@ -1,15 +1,15 @@
 use super::arguments::FunctionArgument;
-use super::expression_node::ExpressionNode;
+use super::expression::ExpressionNode;
 
-pub struct FunctionNode {
+pub struct FunctionDeclarationNode {
     name: String,
     datatype: Option<String>,
     arguments: Vec<FunctionArgument>,
 }
 
-impl FunctionNode {
+impl FunctionDeclarationNode {
     pub fn new(name: String, datatype: Option<String>, arguments: Vec<FunctionArgument>) -> Self {
-        FunctionNode {
+        FunctionDeclarationNode {
             name,
             datatype,
             arguments,
@@ -17,4 +17,4 @@ impl FunctionNode {
     }
 }
 
-impl ExpressionNode for FunctionNode {}
+impl ExpressionNode for FunctionDeclarationNode {}
