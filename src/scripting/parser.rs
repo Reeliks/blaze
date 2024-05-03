@@ -190,7 +190,7 @@ impl Parser {
             x if FORMULA_TOKENS.contains(&x) => {
                 self.move_position_back();
                 let formula_node = self.parse_formula()?;
-                Ok(Some(formula_node));   
+                Ok(Some(formula_node))
             }
             TokenType::Function => {
                 let name_token =
