@@ -11,10 +11,12 @@ pub fn handle_command_arguments() -> Result<()> {
             "create" => create_db_with_console()?,
             "run" => server_bz::server_run(args)?,
             "lexer" => {
-                analyze_lexically()?;
+                let text = input_text()?;
+                analyze_lexically(text)?;
             }
             "parser" => {
-                analyze_syntatically()?;
+                let text = input_text()?;
+                analyze_syntatically(text)?;
             }
             _ => {
                 eprintln!("Invalid arguments");
@@ -48,10 +50,7 @@ pub fn create_db_with_console() -> Result<()> {
     Ok(())
 }
 
-fn analyze_lexically() -> Result<Vec<Token>> {
-    let mut code_to_parse = String::new();
-    std::io::stdin().read_line(&mut code_to_parse)?;
-    code_to_parse = code_to_parse.trim().to_string();
+fn analyze_lexically(code_to_parse: String) -> Result<Vec<Token>> {
     let mut code_lexer = lexer::Lexer::new(code_to_parse);
     code_lexer
         .get_context()
@@ -59,8 +58,8 @@ fn analyze_lexically() -> Result<Vec<Token>> {
     Ok(code_lexer.analyze().unwrap())
 }
 
-fn analyze_syntatically() -> Result<()> {
-    let tokens = analyze_lexically()?;
+pub fn analyze_syntatically(code: String) -> Result<()> {
+    let tokens = analyze_lexically(code)?;
     let mut code_parser = parser::Parser::new(tokens);
     code_parser
         .get_context()
@@ -70,4 +69,10 @@ fn analyze_syntatically() -> Result<()> {
         println!("{:#?}", "new node");
     }
     Ok(())
+}
+
+fn input_text() -> io::Result<String> {
+    let mut code_to_parse = String::new();
+    std::io::stdin().read_line(&mut code_to_parse)?;
+    Ok(code_to_parse)
 }
