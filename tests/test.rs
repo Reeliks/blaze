@@ -14,9 +14,9 @@ fn test_lexer() {
     ];
 
     let code_lexer = Lexer::new(code_to_parse);
-    let actual_tokens_result = code_lexer.analyze().unwrap();
+    let tokens = code_lexer.analyze().unwrap();
 
-    let actual_token_types: Vec<TokenType> = actual_tokens_result
+    let actual_token_types: Vec<TokenType> = tokens
         .iter()
         .map(|token| TokenType::try_from(token.token_type.clone()).unwrap())
         .collect();
@@ -26,18 +26,20 @@ fn test_lexer() {
 
 fn parser(code: String) -> std::io::Result<bool> {
     let code_lexer = Lexer::new(code);
-    let actual_tokens_result = code_lexer.analyze()?;
+    let tokens = code_lexer.analyze()?;
 
-    let mut code_parser = Parser::new(actual_tokens_result);
-    let nodes = code_parser.parse();
+    let mut code_parser = Parser::new(tokens.clone());
+    let ast = code_parser.parse();
 
-    Ok(nodes.is_err())
+    Ok(ast.is_ok() && !tokens.is_empty() && !ast?.nodes.is_empty())
 }
 
 #[test]
 fn test_parser() {
     assert!(parser("fin country_id = 1".to_string()).unwrap());
     assert!(!parser("fifn country_id = 1".to_string()).unwrap());
+    assert!(parser("function get_cheapest_cure(disease_name: str, pharmacy_is_open: bool): link;".to_string()).unwrap());
+    assert!(!parser("9 * 12 import".to_string()).unwrap());
 }
 
 #[test]
