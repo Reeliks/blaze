@@ -216,16 +216,14 @@ impl Parser {
             _ => {
                 Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("{}{}",
-                        "Syntax Error".bright_red(),
                         format!(
-                            ": {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
+                            "{}: {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
+                            "Syntax Error".bright_red(),
                             current_token.token_type,
                             self.context.code_source,
                             self.context.line,
                             self.context.position
                         )
-                    )
                 ))
             }
         }
@@ -264,6 +262,7 @@ impl Parser {
                         return Err(io::Error::new(
                             io::ErrorKind::Other,
                             format!(
+<<<<<<< HEAD
                                 "{}{}",
                                 "Syntax Error".bright_red(),
                                 format!(
@@ -272,6 +271,13 @@ impl Parser {
                                     self.context.line,
                                     self.context.position
                                 )
+=======
+                                "{}: Argument type is expected <-= {}:{}:{}",
+                                "Syntax Error".bright_red(),
+                                self.context.code_source,
+                                self.context.line,
+                                self.context.position
+>>>>>>> c42b73369f374f001167d8f82bdb45f6033ceffd
                             ),
                         ));
                     };
@@ -287,12 +293,20 @@ impl Parser {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
                         format!(
+<<<<<<< HEAD
                             "{}{}",
                             "Syntax Error".bright_red(),
                             format!(
                                 ": Argument expected <-= {}:{}:{}",
                                 self.context.code_source, self.context.line, self.context.position
                             )
+=======
+                            "{}: Argument expected <-= {}:{}:{}",
+                            "Syntax Error".bright_red(),
+                            self.context.code_source,
+                            self.context.line,
+                            self.context.position
+>>>>>>> c42b73369f374f001167d8f82bdb45f6033ceffd
                         ),
                     ));
                 }
@@ -313,12 +327,17 @@ impl Parser {
             TokenType::Number => Box::new(NumberNode::new(first_token.value.parse().unwrap())),
             TokenType::Null => Box::new(NullNode),
             TokenType::True | TokenType::False => {
+<<<<<<< HEAD
                 Box::new(BooleanNode::new(first_token.token_type.clone()).unwrap())
+=======
+                Box::new(BooleanNode::new(current_token.token_type).unwrap())
+>>>>>>> c42b73369f374f001167d8f82bdb45f6033ceffd
             }
             _ => {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!(
+<<<<<<< HEAD
                         "{}{}",
                         "Syntax Error".bright_red(),
                         format!(
@@ -327,6 +346,13 @@ impl Parser {
                             first_token.line + 1,
                             first_token.start + 1
                         )
+=======
+                        "{}: Value expected on assignment <-= at {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        self.context.code_source,
+                        current_token.line + 1,
+                        current_token.position + 1
+>>>>>>> c42b73369f374f001167d8f82bdb45f6033ceffd
                     ),
                 ));
             }
