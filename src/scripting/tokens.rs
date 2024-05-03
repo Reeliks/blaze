@@ -1,6 +1,6 @@
 use strum_macros::{Display, EnumIter};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Token {
     pub token_type: TokenType,
     pub position: u64,
@@ -133,7 +133,7 @@ pub const WHITESPACE_TOKENS: [TokenType; 4] = [
     TokenType::Carriage,
 ];
 
-pub const BINARY_OPERATOR_TOKENS: [TokenType; 11] = [
+pub const BINARY_OPERATOR_TOKENS: [TokenType; 12] = [
     TokenType::Addition,
     TokenType::Subtraction,
     TokenType::Multiplication,
@@ -145,6 +145,7 @@ pub const BINARY_OPERATOR_TOKENS: [TokenType; 11] = [
     TokenType::LessOrEqual,
     TokenType::GreaterOrEqual,
     TokenType::Hat,
+    TokenType::Assign
 ];
 
 pub const UNARY_OPERATOR_TOKENS: [TokenType; 2] = [TokenType::Increment, TokenType::Decrement];
