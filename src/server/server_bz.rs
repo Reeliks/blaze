@@ -39,7 +39,7 @@ fn handle_connection(mut stream: TcpStream, password: String) -> io::Result<()> 
     let hashmap = headers::parse_header(request.clone()).unwrap();
     if let Some(value) = hashmap.get("Password") {
         if password == *value {
-            analyze_syntatically(headers::del_headers(request))?
+            analyze_syntatically(headers::del_headers(request).unwrap())?
         }
     }
 

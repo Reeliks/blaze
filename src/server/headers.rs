@@ -19,9 +19,8 @@ pub fn parse_header(response: String) -> Option<HashMap<String, String>> {
     Some(header)
 }
 
-pub fn del_headers(response: String) -> String {
+pub fn del_headers(response: String) -> Option<String> {
     let mut is_empty_line = false;
-    let mut result = "".to_string();
 
     for line in response.lines() {
         if line.is_empty() {
@@ -29,9 +28,9 @@ pub fn del_headers(response: String) -> String {
         }
 
         if is_empty_line {
-            result = line.to_string();
+            Some(line.to_string());
         }
     }
 
-    result
+    None
 }
