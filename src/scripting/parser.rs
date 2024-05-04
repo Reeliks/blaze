@@ -366,11 +366,13 @@ impl Parser {
                 )
             );
         };
-        if self.is_position_movable()
-        && self.move_position().is_ok()
-        && UNARY_OPERATOR_TOKENS.contains(&self.get_current_token()?.token_type) 
+        if !self.is_position_movable() {
+            return Ok(left_operand)
+        }
+        self.move_position()?;
+        let right_unary_operator = self.get_current_token()?;
+        if UNARY_OPERATOR_TOKENS.contains(&right_unary_operator.token_type) 
         {
-            let right_unary_operator = self.get_current_token()?;
             is_unary_operator_prohibited(
                 right_unary_operator.clone(), 
                 prohibited_unary_operator_types, 
@@ -384,17 +386,28 @@ impl Parser {
                 )
             );
         }
+        else {
+            self.move_position_back();
+            println!("Current: {}", self.get_current_token()?.token_type);
+        }
 
-        if self.is_position_movable() 
-        && self.move_position().is_ok()
-        && BINARY_OPERATOR_TOKENS.contains(&self.get_current_token()?.token_type) {
-            let operator = self.get_current_token()?;
+        if !self.is_position_movable() {
+            return Ok(left_operand)
+        };
+        self.move_position()?;
+        let operator = self.get_current_token()?;
+        println!("Supposed to be an operator: {}", operator.token_type);
+        if BINARY_OPERATOR_TOKENS.contains(&operator.token_type) {
             self.move_position()?;
             let right_operand = self.parse_formula()?;
             let binary_operator_node =
                 Box::new(BinaryOperatorNode::new(operator.token_type, left_operand, right_operand));
             return Ok(binary_operator_node)
-        };
+        }
+        else {
+            self.move_position_back();
+        }
+        
         Ok(left_operand)
     }
 }
