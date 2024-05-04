@@ -8,6 +8,7 @@ regex = "1.10"
 bson = "2.10"
 rand = "0.8"
 strum = "0.26"
+colored = "2.1.0"
 strum_macros = "0.26"
 dotenvy = "0.15"
 

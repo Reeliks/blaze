@@ -1,3 +1,4 @@
+use colored::Colorize;
 use regex::Regex;
 use std::io;
 use strum::IntoEnumIterator;
@@ -63,7 +64,8 @@ impl Lexer {
                 let matched_str = matches.as_str();
                 self.tokens.push(Token {
                     token_type,
-                    position: self.context.position,
+                    start: self.context.position,
+                    stop: self.context.position + matched_str.len() as u64,
                     line: self.context.line,
                     value: matched_str.to_string(),
                 });
@@ -78,8 +80,10 @@ impl Lexer {
         Err(io::Error::new(
             io::ErrorKind::Other,
             format!(
-                "\n\"{}\" token isn't recognized <-= at {}:{}:{}",
+                "{}: '{}' {} <-= at {}:{}:{}",
+                "Lexical Error".bright_red(),
                 positioned_code,
+                "isn't recognized",
                 self.context.code_source,
                 self.context.line + 1,
                 self.context.position + 1
@@ -104,12 +108,13 @@ impl Lexer {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!(
-                        "\n\"{}{}\": numbers cannot end with alphanumeric <-= at {}:{}:{}",
+                        "{}\n\"{}{}\": numbers cannot end with alphanumeric <-= at {}:{}:{}",
+                        "Lexical Error".bright_red(),
                         last_token.value,
                         current_token.value,
                         self.context.code_source,
                         last_token.line + 1,
-                        last_token.position + 1
+                        last_token.start + 1
                     )
                     .to_string(),
                 ));
@@ -125,14 +130,14 @@ impl Lexer {
             let both_sides_unresolved_chars_regex = Regex::new(r"[\w\d]").unwrap();
             let left_side_unresolved_chars_regex = Regex::new(r"[\.]").unwrap();
 
-            let char_before_index: u64 = current_token.position - 1;
-            let char_after_index: u64 = current_token.position + current_token.value.len() as u64;
+            let char_before_index: u64 = current_token.start - 1;
+            let char_after_index: u64 = current_token.start + current_token.value.len() as u64;
 
             if char_before_index as i32 > 0 {
                 let char_before = &self
                     .code
                     .chars()
-                    .nth((current_token.position - 1) as usize)
+                    .nth((current_token.start - 1) as usize)
                     .unwrap()
                     .to_string();
                 if both_sides_unresolved_chars_regex.is_match(char_before)
@@ -141,7 +146,8 @@ impl Lexer {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
                         format!(
-                            "\n\"{}\" near a string with no space between <-= at {}:{}:{}",
+                            "{}: \"{}\" near a string with no space between <-= at {}:{}:{}",
+                            "Lexical Error".bright_red(),
                             char_before,
                             self.context.code_source,
                             current_token.line + 1,
@@ -161,7 +167,8 @@ impl Lexer {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
                         format!(
-                            "\n\"{}\" after a string with no space between <-= at {}:{}:{}",
+                            "{}: \"{}\" after a string with no space between <-= at {}:{}:{}",
+                            "Lexical Error".bright_red(),
                             char_after,
                             self.context.code_source,
                             current_token.line + 1,

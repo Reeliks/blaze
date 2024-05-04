@@ -65,9 +65,7 @@ pub fn analyze_syntatically(code: String) -> Result<()> {
         .get_context()
         .set_code_source("Shell".to_string());
     let nodes = code_parser.parse();
-    for _node in &nodes {
-        println!("{:#?}", "new node");
-    }
+    println!("Parsing successfully completed! Nodes Count: {}", nodes?.nodes.len());
     Ok(())
 }
 
