@@ -2,7 +2,7 @@ use std::io;
 
 use crate::scripting::tokens::TokenType;
 
-use super::expression_node::ExpressionNode;
+use super::expression::ExpressionNode;
 
 pub struct BooleanNode {
     state: bool,

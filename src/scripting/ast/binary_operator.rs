@@ -1,23 +1,23 @@
 use crate::scripting::tokens::TokenType;
 
-use super::expression_node::ExpressionNode;
+use super::expression::ExpressionNode;
 
 pub struct BinaryOperatorNode {
     operator: TokenType,
-    left_node: Box<dyn ExpressionNode>,
-    right_node: Box<dyn ExpressionNode>,
+    left_operand: Box<dyn ExpressionNode>,
+    right_operand: Box<dyn ExpressionNode>,
 }
 
 impl BinaryOperatorNode {
     pub fn new(
         operator: TokenType,
-        left_node: Box<dyn ExpressionNode>,
-        right_node: Box<dyn ExpressionNode>,
+        left_operand: Box<dyn ExpressionNode>,
+        right_operand: Box<dyn ExpressionNode>,
     ) -> Self {
         BinaryOperatorNode {
             operator,
-            left_node,
-            right_node,
+            left_operand,
+            right_operand,
         }
     }
 }

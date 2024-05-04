@@ -2,19 +2,20 @@ use colored::*;
 use rand::seq::SliceRandom;
 
 use super::ast::arguments::{FunctionArgument, PassedArgument};
-use super::ast::binary_operator_node::BinaryOperatorNode;
-use super::ast::boolean_node::BooleanNode;
-use super::ast::expression_node::ExpressionNode;
-use super::ast::function_node::FunctionNode;
-use super::ast::new_variable_node::NewVariableNode;
-use super::ast::null_node::NullNode;
-use super::ast::number_node::NumberNode;
-use super::ast::object_node::ObjectNode;
-use super::ast::statements_node::StatementsNode;
-use super::ast::string_node::StringNode;
+use super::ast::binary_operator::BinaryOperatorNode;
+use super::ast::boolean::BooleanNode;
+use super::ast::expression::ExpressionNode;
+use super::ast::function_declaration::FunctionDeclarationNode;
+use super::ast::unary_operator::UnaryOperatorNode;
+use super::ast::variable_declaration::VariableDeclaration;
+use super::ast::null::NullNode;
+use super::ast::number::NumberNode;
+use super::ast::object::ObjectNode;
+use super::ast::statements::StatementsNode;
+use super::ast::string::StringNode;
 use super::context::Context;
 use super::tokens::{
-    Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, VARIABLE_ASSIGNMENT_TOKENS,
+    Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS, VARIABLE_ASSIGNMENT_TOKENS
 };
 use std::io::{self, Result};
 
@@ -94,7 +95,7 @@ impl Parser {
         let current_token = self.get_current_token()?;
         self.parser_position += 1;
         self.context.line = current_token.line + 1;
-        self.context.position = current_token.position + 1;
+        self.context.position = current_token.start + 1;
         Ok(())
     }
 
@@ -102,7 +103,7 @@ impl Parser {
         self.parser_position -= 1;
         let current_token = self.get_current_token().unwrap();
         self.context.line = current_token.line + 1;
-        self.context.position = current_token.position + 1;
+        self.context.position = current_token.start + 1;
     }
 
     pub fn is_position_movable(&self) -> bool {
@@ -177,7 +178,7 @@ impl Parser {
                 self.move_position()?;
                 Ok(Some(
                     Box::new(
-                        NewVariableNode::new(
+                        VariableDeclaration::new(
                         variable_token.value,
                         datatype,
                         self.parse_formula()?
@@ -202,7 +203,7 @@ impl Parser {
                 }
                 Ok(Some(
                     Box::new(
-                        FunctionNode::new(
+                        FunctionDeclarationNode::new(
                         name_token.value,
                         datatype,
                         arguments
@@ -299,14 +300,14 @@ impl Parser {
     }
 
     pub fn parse_formula(&mut self) -> Result<Box<dyn ExpressionNode>> {
-        let current_token = self.require_token(FORMULA_TOKENS.to_vec())?;
-        let left_node: Box<dyn ExpressionNode> = match current_token.token_type {
-            TokenType::Alphanumeric => Box::new(ObjectNode::new(current_token.value)),
-            TokenType::CharArray => Box::new(StringNode::new(current_token.value)),
-            TokenType::Number => Box::new(NumberNode::new(current_token.value.parse().unwrap())),
+        let first_token = self.require_token(FORMULA_TOKENS.to_vec())?;
+        let left_operand: Box<dyn ExpressionNode> = match first_token.token_type {
+            TokenType::Alphanumeric => Box::new(ObjectNode::new(first_token.clone().value)),
+            TokenType::CharArray => Box::new(StringNode::new(first_token.clone().value)),
+            TokenType::Number => Box::new(NumberNode::new(first_token.value.parse().unwrap())),
             TokenType::Null => Box::new(NullNode),
             TokenType::True | TokenType::False => {
-                Box::new(BooleanNode::new(current_token.token_type).unwrap())
+                Box::new(BooleanNode::new(first_token.token_type.clone()).unwrap())
             }
             _ => {
                 return Err(io::Error::new(
@@ -315,27 +316,45 @@ impl Parser {
                         "{}: Value expected on assignment <-= at {}:{}:{}",
                         "Syntax Error".bright_red(),
                         self.context.code_source,
-                        current_token.line + 1,
-                        current_token.position + 1
+                        first_token.line + 1,
+                        first_token.start + 1
                     ),
                 ));
             }
         };
         if !self.is_position_movable() {
-            return Ok(left_node);
+            return Ok(left_operand);
         }
         self.move_position()?;
-        match self.get_current_token()?.token_type {
+        let second_token = self.get_current_token()?;
+        match second_token.token_type {
             operator if BINARY_OPERATOR_TOKENS.contains(&operator) => {
                 self.move_position()?;
-                let right_node = self.parse_formula()?;
+                let right_operand = self.parse_formula()?;
                 let binary_operator_node =
-                    Box::new(BinaryOperatorNode::new(operator, left_node, right_node));
+                    Box::new(BinaryOperatorNode::new(operator, left_operand, right_operand));
                 Ok(binary_operator_node)
+            }
+            operator if UNARY_OPERATOR_TOKENS.contains(&operator) => {
+                if !first_token.is_type(TokenType::Alphanumeric) {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!(
+                            "{}: Unary operator works only with objects <-= at {}:{}:{}",
+                            "Syntax Error".bright_red(),
+                            self.context.code_source,
+                            first_token.line + 1,
+                            first_token.start + 1
+                        )
+                    ));
+                };
+                let unary_operator_node =
+                    Box::new(UnaryOperatorNode::new(operator, left_operand));
+                Ok(unary_operator_node)
             }
             _ => {
                 self.move_position_back();
-                Ok(left_node)
+                Ok(left_operand)
             }
         }
     }

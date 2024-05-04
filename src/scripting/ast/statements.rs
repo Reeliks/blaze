@@ -1,4 +1,4 @@
-use crate::scripting::ast::expression_node::ExpressionNode;
+use super::expression::ExpressionNode;
 
 pub struct StatementsNode {
     pub nodes: Vec<Box<dyn ExpressionNode>>,

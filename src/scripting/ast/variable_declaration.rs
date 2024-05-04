@@ -1,14 +1,14 @@
-use super::expression_node::ExpressionNode;
+use super::expression::ExpressionNode;
 
-pub struct NewVariableNode {
+pub struct VariableDeclaration {
     name: String,
     datatype: Option<String>,
     value: Box<dyn ExpressionNode>,
 }
 
-impl NewVariableNode {
+impl VariableDeclaration {
     pub fn new(name: String, datatype: Option<String>, value: Box<dyn ExpressionNode>) -> Self {
-        NewVariableNode {
+        VariableDeclaration {
             name,
             datatype,
             value,
@@ -16,4 +16,4 @@ impl NewVariableNode {
     }
 }
 
-impl ExpressionNode for NewVariableNode {}
+impl ExpressionNode for VariableDeclaration {}

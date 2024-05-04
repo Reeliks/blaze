@@ -1,9 +1,10 @@
 use strum_macros::{Display, EnumIter};
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct Token {
+    pub struct Token {
     pub token_type: TokenType,
-    pub position: u64,
+    pub start: u64,
+    pub stop: u64,
     pub line: u64,
     pub value: String,
 }

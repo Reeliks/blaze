@@ -1,4 +1,4 @@
-use super::expression_node::ExpressionNode;
+use crate::scripting::ast::expression::ExpressionNode;
 
 enum StringType {
     Basic,
