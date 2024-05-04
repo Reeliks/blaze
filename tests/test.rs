@@ -2,6 +2,7 @@ use blaze::db::create_db;
 use blaze::scripting::lexer::Lexer;
 use blaze::scripting::parser::Parser;
 use blaze::scripting::tokens::TokenType;
+use blaze::server::headers::Header;
 
 #[test]
 fn test_lexer() {
@@ -49,4 +50,14 @@ fn test_parser() {
 fn test_cteate_db() {
     let is_create = create_db::create_db_structure("./db".trim(), true).is_ok();
     assert!(is_create);
+}
+
+#[test]
+fn test_header_parser() {
+    let response = "POST / HTTP/1.1\nHost: localhost:3300\nUser-Agent: curl/8.7.1\nAccept: */*\nPassword: 1221\n"
+    .to_string();
+
+    if let Ok(result) = Header::get_value(response, "Password".to_string()) {
+        assert!(result == "1221");
+    };
 }

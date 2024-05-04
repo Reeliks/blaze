@@ -5,6 +5,7 @@ pub struct Args {
     pub ip: String,
     pub port: String,
     pub blz_file: String,
+    pub password: String,
 }
 
 impl Args {
@@ -13,6 +14,7 @@ impl Args {
         let mut ip = default.ip.clone();
         let mut port = default.port.clone();
         let mut blz_file = default.blz_file.clone();
+        let mut password = default.password.clone();
 
         for arg in 0..args.len() {
             let str = &args[arg];
@@ -31,10 +33,16 @@ impl Args {
                 "-ip" => ip.clone_from(&value),
                 "-port" => port.clone_from(&value),
                 "-blz_file" => blz_file.clone_from(&value),
+                "-password" => password.clone_from(&value),
                 _ => (),
             }
         }
-        Some(Args { ip, port, blz_file })
+        Some(Args {
+            ip,
+            port,
+            blz_file,
+            password,
+        })
     }
 
     fn default() -> Self {
@@ -42,6 +50,7 @@ impl Args {
             ip: "localhost".to_string(),
             port: "3306".to_string(),
             blz_file: "./".to_string(),
+            password: "password".to_string(),
         }
     }
 }
