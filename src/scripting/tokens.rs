@@ -1,7 +1,7 @@
 use strum_macros::{Display, EnumIter};
 
 #[derive(Clone, PartialEq, Debug)]
-    pub struct Token {
+pub struct Token {
     pub token_type: TokenType,
     pub start: u64,
     pub stop: u64,
@@ -13,6 +13,11 @@ impl Token {
     pub fn is_type(&self, token_type: TokenType) -> bool {
         self.token_type == token_type
     }
+}
+
+pub enum TokenSide {
+    Left,
+    Right
 }
 
 // It's necessary to put tokens that structure more longer ones
@@ -151,13 +156,15 @@ pub const BINARY_OPERATOR_TOKENS: [TokenType; 12] = [
 
 pub const UNARY_OPERATOR_TOKENS: [TokenType; 2] = [TokenType::Increment, TokenType::Decrement];
 
-pub const FORMULA_TOKENS: [TokenType; 6] = [
+pub const FORMULA_TOKENS: [TokenType; 8] = [
     TokenType::CharArray,
     TokenType::Number,
     TokenType::Alphanumeric,
     TokenType::True,
     TokenType::False,
     TokenType::Null,
+    TokenType::Increment,
+    TokenType::Decrement
 ];
 
 pub const VARIABLE_ASSIGNMENT_TOKENS: [TokenType; 2] = [TokenType::Mut, TokenType::Fin];

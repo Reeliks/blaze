@@ -1,6 +1,5 @@
 use crate::scripting::tokens::Token;
 use std::io::{self, Result};
-
 use crate::db::create_db;
 use crate::scripting::{lexer, parser};
 
@@ -62,7 +61,9 @@ fn analyze_syntatically() -> Result<()> {
     code_parser
         .get_context()
         .set_code_source("Shell".to_string());
-    let nodes = code_parser.parse();
-    println!("Parsing successfully completed! Nodes Count: {}", nodes?.nodes.len());
+    let nodes = code_parser.parse()?.nodes;
+    if !nodes.is_empty() {
+        println!("Parsing successfully completed! Nodes Count: {}", nodes.len());
+    }
     Ok(())
 }
