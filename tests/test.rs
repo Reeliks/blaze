@@ -2,7 +2,7 @@ use blaze::db::create_db;
 use blaze::scripting::lexer::Lexer;
 use blaze::scripting::parser::Parser;
 use blaze::scripting::tokens::TokenType;
-use blaze::server::headers::Header;
+use blaze::server::headers;
 
 #[test]
 fn test_lexer() {
@@ -57,7 +57,8 @@ fn test_header_parser() {
     let response = "POST / HTTP/1.1\nHost: localhost:3300\nUser-Agent: curl/8.7.1\nAccept: */*\nPassword: 1221\n"
     .to_string();
 
-    if let Ok(result) = Header::get_value(response, "Password".to_string()) {
-        assert!(result == "1221");
-    };
+    let hashmap = headers::parse_header(response.clone()).unwrap();
+    if let Some(value) = hashmap.get("Password") {
+        assert!(value == "1221");
+    }
 }
