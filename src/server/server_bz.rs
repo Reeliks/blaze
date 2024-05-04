@@ -3,18 +3,19 @@ use std::ffi::OsStr;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
+use crate::server::headers::Header;
 
 pub fn server_run(args: Vec<String>) -> io::Result<()> {
     let config = Args::parse(args).unwrap();
     let blz_file = Path::new(&config.blz_file);
-
+/*
     if !blz_file.exists() || blz_file.extension().unwrap_or(OsStr::new("")) != "blz" {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
             "blz_file not found",
         ));
     }
-
+*/
     let ip = format!("{}:{}", config.ip, config.port);
     let listener = TcpListener::bind(ip)?;
 
@@ -31,12 +32,16 @@ fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
     let mut request = String::new();
 
     let bytes_read = stream.read(&mut buffer)?;
-
     request.push_str(&String::from_utf8_lossy(&buffer[..bytes_read]));
 
-    let test: Vec<&str> = request.split("\n").collect();
+    //analyze_syntatically(request)?;
+    let password = Header::get_value(request, "Password".to_string())?;
 
-    analyze_syntatically(test.last().unwrap().to_string())?;
+    if password == "1221" {
+        println!("Пароль вверный");
+    } else {
+        println!("ебалан?");
+    }
 
     Ok(())
 }
