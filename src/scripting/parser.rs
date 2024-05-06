@@ -1,7 +1,9 @@
 use colored::*;
 use rand::seq::SliceRandom;
 
-use super::ast::arguments::FunctionArgument;
+use super::ast::call::CallNode;
+use super::ast::member::MemberNode;
+use super::ast::parameter::{Parameter, ParameterType, Parameters};
 use super::ast::binary_operator::BinaryOperatorNode;
 use super::ast::boolean::BooleanNode;
 use super::ast::expression::ExpressionNode;
@@ -11,11 +13,17 @@ use super::ast::variable_declaration::VariableDeclaration;
 use super::ast::null::NullNode;
 use super::ast::number::NumberNode;
 use super::ast::object::ObjectNode;
-use super::ast::statements::StatementsNode;
+use super::ast::body::BodyNode;
 use super::ast::string::StringNode;
 use super::context::Context;
 use super::tokens::{
-    Token, TokenSide, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS, VARIABLE_ASSIGNMENT_TOKENS
+    Token, 
+    TokenSide, 
+    TokenType, 
+    BINARY_OPERATOR_TOKENS, 
+    FORMULA_TOKENS, 
+    UNARY_OPERATOR_TOKENS, 
+    VARIABLE_ASSIGNMENT_TOKENS
 };
 use std::io::{self, Result};
 
@@ -34,36 +42,36 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<StatementsNode> {
-        let mut root = StatementsNode::new();
-        let mut add_node = |node: Box<dyn ExpressionNode>| {
+    pub fn parse(&mut self) -> Result<BodyNode> {
+        let mut root = BodyNode::new();
+        let mut add_node
+            = |node: Box<dyn ExpressionNode>| {
             root.add_node(node);
         };
         loop {
-            let parsed_expression = self.parse_expression();
+            let parsed_expression
+                = self.parse_expression();
             match parsed_expression {
                 Ok(Some(..)) => {
                     let parsed_expression = parsed_expression?;
                     add_node(parsed_expression.unwrap());
                     if self.is_position_movable() {
-                        self.move_position()?;
+                        self.move_position();
                         let semicolon_required = self.require_token(vec![TokenType::ExpressionEnd]);
                         if semicolon_required.is_err() {
                             let err = semicolon_required.unwrap_err();
                             println!("{}", err);
-                            return Ok(StatementsNode::new());
+                            return Ok(BodyNode::new());
                         };
                     };
-                    if self.is_position_movable() {
-                        self.move_position()?
-                    } else {
+                    if !self.move_if_position_is_movable() {
                         break;
-                    }
+                    };
                 }
                 Ok(None) => break,
                 Err(e) => {
                     println!("{}", e);
-                    return Ok(StatementsNode::new());
+                    return Ok(BodyNode::new());
                 }
             }
         }
@@ -77,26 +85,26 @@ impl Parser {
     fn get_current_token(&mut self) -> Result<Token> {
         if self.parser_position < self.tokens.len() as u64 {
             let current_token = self.tokens[self.parser_position as usize].clone();
-            // There is no reason to start line and position variables from zero
-            // since a parser is not supposed to work with code, but with tokens instead.
             return Ok(current_token);
         }
         Err(io::Error::new(
             io::ErrorKind::Other,
             format!(
-                "{}{}",
-                "FATAL".bright_red(),
+                "{}: {}",
+                "FATAL".red(),
                 "Attempted to access a non-existent token"
             ),
         ))
     }
 
-    fn move_position(&mut self) -> Result<()> {
-        let current_token = self.get_current_token()?;
+    fn move_position(&mut self) -> Token {
+        let current_token = self.get_current_token().unwrap();
         self.parser_position += 1;
+        // There is no reason to start line and position variables from zero
+        // since a parser is not supposed to work with code, but with tokens instead.
         self.context.line = current_token.line + 1;
         self.context.position = current_token.start + 1;
-        Ok(())
+        current_token
     }
 
     fn move_position_back(&mut self) {
@@ -108,6 +116,32 @@ impl Parser {
 
     fn is_position_movable(&self) -> bool {
         self.parser_position + 1 < self.tokens.len() as u64
+    }
+
+    fn move_if_position_is_movable(&mut self) -> bool {
+        if !self.is_position_movable() {
+            return false;
+        }
+        self.move_position();
+        true
+    }
+
+    fn move_if_next_token_is(&mut self, desired_types: Vec<TokenType>) -> bool {
+        if !self.is_position_movable() {
+            return false;
+        };
+        self.move_position();
+        if desired_types
+            .into_iter()
+            .any(
+                |x| 
+                x == self.get_current_token()
+                .unwrap().token_type) {
+            return true
+        };
+        self.move_position_back();
+        false
+
     }
 
     fn require_token(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
@@ -164,18 +198,18 @@ impl Parser {
             return Ok(None);
         };
         let current_token = self.get_current_token()?;
-        self.move_position()?;
+        self.move_position();
         match current_token.token_type {
             x if VARIABLE_ASSIGNMENT_TOKENS.contains(&x) => {
                 let variable_token
                     = self.require_token(vec![TokenType::Alphanumeric])?;
-                self.move_position()?;
+                self.move_position();
                 let datatype = self.parse_datatype()?;
                 if datatype.is_some() {
-                    self.move_position()?
+                    self.move_position();
                 };
                 self.require_token(vec![TokenType::Assign])?;
-                self.move_position()?;
+                self.move_position();
                 Ok(Some(
                     Box::new(
                         VariableDeclaration::new(
@@ -193,10 +227,10 @@ impl Parser {
             TokenType::Function => {
                 let name_token =
                     self.require_token(vec![TokenType::Alphanumeric])?;
-                self.move_position()?;
+                self.move_position();
                 let arguments
-                    = self.parse_function_arguments()?;
-                self.move_position()?;
+                    = self.parse_parameters_in_parenthesis(ParameterType::Function)?;
+                self.move_position();
                 let datatype = self.parse_datatype()?.clone();
                 if datatype.is_none() {
                     self.move_position_back();
@@ -216,14 +250,14 @@ impl Parser {
             _ => {
                 Err(io::Error::new(
                     io::ErrorKind::Other,
-                        format!(
-                            "{}: {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
-                            "Syntax Error".bright_red(),
-                            current_token.token_type,
-                            self.context.code_source,
-                            self.context.line,
-                            self.context.position
-                        )
+                    format!(
+                        "{}: {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        current_token.token_type,
+                        self.context.code_source,
+                        self.context.line,
+                        self.context.position
+                    )
                 ))
             }
         }
@@ -232,75 +266,162 @@ impl Parser {
     fn parse_datatype(&mut self) -> Result<Option<String>> {
         let current_token = self.get_current_token();
         if current_token.is_ok() && current_token.unwrap().is_type(TokenType::Colon) {
-            self.move_position()?;
+            self.move_position();
             let datatype_token = self.require_token(vec![TokenType::Alphanumeric])?;
             return Ok(Some(datatype_token.value));
         };
         Ok(None)
     }
 
-    fn parse_function_arguments(&mut self) -> Result<Vec<FunctionArgument>> {
-        let mut arguments: Vec<FunctionArgument> = vec![];
+    fn parse_parameters_in_parenthesis(&mut self, parameter_type: ParameterType) -> Result<Parameters> {
         self.require_token(vec![TokenType::LPar])?;
-        loop {
-            if !self.is_position_movable() {
-                self.raise_expected_tokens_error(vec![TokenType::RPar])?;
-            }
-            self.move_position()?;
-            let mut current_token = self.get_current_token().unwrap();
+        self.move_position();
+        let arguments = self.parse_parameters(parameter_type)?;
+        let _ = self.move_position();
+        self.require_token(vec![TokenType::RPar])?;
+        Ok(arguments)
+    } 
 
-            if !arguments.is_empty() && current_token.is_type(TokenType::Comma) {
-                self.move_position()?;
-                current_token = self.require_token(vec![TokenType::Alphanumeric])?;
+    fn parse_parameters(&mut self, parameter_type: ParameterType) -> Result<Parameters> {
+        let mut arguments: Parameters = vec![];
+
+        let is_calling_parameter 
+            = parameter_type == ParameterType::Call;
+
+        let mut keyword_arguments_time: bool = false;
+        let mut check_if_incorrect_argument_sequence
+            = |is_keyword_argument: bool, this: &mut Self| {
+            if !is_keyword_argument && keyword_arguments_time {
+                let current_token = this.get_current_token()?;
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                        "{}: Positional argument follows keyword argument <-= at {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        this.context.code_source,
+                        current_token.line + 1,
+                        current_token.start + 1
+                    )
+                ));
             };
-
-            match current_token.token_type {
-                TokenType::Alphanumeric => {
-                    self.move_position()?;
-                    let argument_datatype = self.parse_datatype()?;
-                    if argument_datatype.is_none() {
-                        return Err(io::Error::new(
-                            io::ErrorKind::Other,
-                            format!(
-                                "{}: Argument type is expected <-= {}:{}:{}",
-                                "Syntax Error".bright_red(),
-                                self.context.code_source,
-                                self.context.line,
-                                self.context.position
-                            ),
-                        ));
-                    };
-                    arguments.push(FunctionArgument::new(
-                        current_token.value,
-                        argument_datatype.unwrap(),
-                    ));
-                }
-                TokenType::RPar => {
-                    break;
-                }
-                _ => {
+            if is_keyword_argument {
+                keyword_arguments_time = true;
+            };
+            Ok(())
+        };
+        loop {
+            if self.get_current_token().is_err() {
+                self.move_position_back();
+                break;
+            };
+            let mut first_parameter_token = self.get_current_token()?;
+            if !arguments.is_empty() && first_parameter_token.is_type(TokenType::Comma) {
+                self.move_position();
+                first_parameter_token = self.get_current_token()?;
+            };
+                   
+            if is_calling_parameter
+            && first_parameter_token.is_type(TokenType::Alphanumeric) {
+                check_if_incorrect_argument_sequence(
+                    true, 
+                    self
+                )?;
+                let _ = self.move_position();
+                let assign_token = self.get_current_token();
+                if assign_token.is_err() 
+                || !assign_token?.is_type(TokenType::Assign) {
+                    self.raise_expected_tokens_error(vec![TokenType::Assign])?;
+                };
+                let _ = self.move_position();
+                let value_node = self.parse_formula()?;
+                arguments.push(Parameter::new_calling(
+                    Some(first_parameter_token.value),
+                    value_node
+                ));
+                let _ = self.move_position();
+            }
+            else if is_calling_parameter 
+            && FORMULA_TOKENS.contains(&first_parameter_token.token_type) {
+                check_if_incorrect_argument_sequence(
+                    false, 
+                    self
+                )?;
+                let value_node = self.parse_formula()?;
+                arguments.push(Parameter::new_calling(
+                    None, 
+                    value_node
+                )); 
+                let _ = self.move_position();
+            }
+            else if parameter_type == ParameterType::Function 
+                && first_parameter_token.is_type(TokenType::Alphanumeric) {
+                let _ = self.move_position();
+                let argument_datatype = self.parse_datatype()?;
+                if argument_datatype.is_none() {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
                         format!(
-                            "{}: Argument expected <-= {}:{}:{}",
+                            "{}: Argument type is expected <-= {}:{}:{}",
                             "Syntax Error".bright_red(),
                             self.context.code_source,
                             self.context.line,
                             self.context.position
                         ),
                     ));
-                }
+                };
+                arguments.push(Parameter::new_functional(
+                    first_parameter_token.value,
+                    argument_datatype.unwrap(),
+                )); 
+                let _ = self.move_position();
+            }
+            else {
+                self.move_position_back();
+                break;
             }
         }
         Ok(arguments)
     }
 
+    fn parse_identifiers(&mut self) -> Result<Box<dyn ExpressionNode>> {
+        let object_token = self.get_current_token()?;
+        let mut object_node: Box<dyn ExpressionNode> 
+            =  Box::new(ObjectNode::new(object_token.value));
+        if self.move_if_next_token_is(vec![TokenType::LPar]) {
+            let arguments
+                = self.parse_parameters_in_parenthesis(ParameterType::Call)?;
+            object_node = Box::new(
+                CallNode::new(object_node, arguments)
+            );
+        };
+        if self.move_if_next_token_is(vec![TokenType::Dot]) { 
+            if !self.move_if_position_is_movable() {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other, 
+                    format!(
+                        "{}: Children expected <-= at {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        self.context.code_source,
+                        self.context.line,
+                        self.context.position + 1
+                    )
+                ));
+            };
+            let next_member 
+                = self.parse_identifiers()?;
+            object_node = Box::new(
+                MemberNode::new(object_node, next_member)
+            );
+        };
+        Ok(object_node)
+    }
+
     fn parse_formula(&mut self) -> Result<Box<dyn ExpressionNode>> {
         let mut unary_operator_tokens: Vec<Token> = vec![];
         let mut prohibited_unary_operator_types: Vec<TokenType> = vec![];
-
+        
         let is_unary_operator_prohibited
-            = |token_to_check: Token, prohibited_types: Vec<TokenType>, this: &Self| {
+            = move |token_to_check: Token, prohibited_types: Vec<TokenType>, this: &Self| {
             if prohibited_types
                 .into_iter()
                 .any(|x| token_to_check.is_type(x)) {
@@ -320,32 +441,34 @@ impl Parser {
         }; 
     
         loop {
-            let current_unary_operator_token = self.get_current_token()?; 
-            if UNARY_OPERATOR_TOKENS.contains(&current_unary_operator_token.token_type) {
+            if UNARY_OPERATOR_TOKENS.contains(&self.get_current_token()?.token_type) {
+                let current_unary_operator_token = self.get_current_token()?;
                 unary_operator_tokens.push(current_unary_operator_token.clone());
                 is_unary_operator_prohibited(
                     current_unary_operator_token.clone(), 
                     prohibited_unary_operator_types.clone(), 
                     self
                 )?;
+                self.move_position();
                 if [TokenType::Increment, TokenType::Decrement]
                 .into_iter()
                 .any(|x| x == current_unary_operator_token.token_type) 
                 {
-                    prohibited_unary_operator_types.extend(vec![TokenType::Increment, TokenType::Decrement]);
+                    prohibited_unary_operator_types
+                        .extend(vec![TokenType::Increment, TokenType::Decrement]);
                 }
                 else {
-                    prohibited_unary_operator_types.push(current_unary_operator_token.token_type);
-                }
-                self.move_position()?
+                    prohibited_unary_operator_types
+                        .push(current_unary_operator_token.token_type);
+                };
+                continue
             }
-            else {
-                break;
-            }
+            break
         };
         let formula_token = self.get_current_token()?;
-        let mut left_operand: Box<dyn ExpressionNode> = match self.get_current_token()?.token_type {
-            TokenType::Alphanumeric => Box::new(ObjectNode::new(formula_token.clone().value)),
+        let mut left_operand: Box<dyn ExpressionNode>
+            = match formula_token.token_type {
+            TokenType::Alphanumeric => self.parse_identifiers()?,
             TokenType::CharArray => Box::new(StringNode::new(formula_token.clone().value)),
             TokenType::Number => Box::new(NumberNode::new(formula_token.value.parse().unwrap())),
             TokenType::Null => Box::new(NullNode),
@@ -366,13 +489,9 @@ impl Parser {
                 )
             );
         };
-        if !self.is_position_movable() {
-            return Ok(left_operand)
-        }
-        self.move_position()?;
-        let right_unary_operator = self.get_current_token()?;
-        if UNARY_OPERATOR_TOKENS.contains(&right_unary_operator.token_type) 
+        if self.move_if_next_token_is(UNARY_OPERATOR_TOKENS.to_vec())
         {
+            let right_unary_operator = self.get_current_token()?;
             is_unary_operator_prohibited(
                 right_unary_operator.clone(), 
                 prohibited_unary_operator_types, 
@@ -386,28 +505,14 @@ impl Parser {
                 )
             );
         }
-        else {
-            self.move_position_back();
-            println!("Current: {}", self.get_current_token()?.token_type);
-        }
-
-        if !self.is_position_movable() {
-            return Ok(left_operand)
-        };
-        self.move_position()?;
-        let operator = self.get_current_token()?;
-        println!("Supposed to be an operator: {}", operator.token_type);
-        if BINARY_OPERATOR_TOKENS.contains(&operator.token_type) {
-            self.move_position()?;
+        if self.move_if_next_token_is(BINARY_OPERATOR_TOKENS.to_vec()) {
+            let operator = self.get_current_token()?;
+            self.move_position();
             let right_operand = self.parse_formula()?;
             let binary_operator_node =
                 Box::new(BinaryOperatorNode::new(operator.token_type, left_operand, right_operand));
             return Ok(binary_operator_node)
-        }
-        else {
-            self.move_position_back();
-        }
-        
+        };
         Ok(left_operand)
     }
 }
