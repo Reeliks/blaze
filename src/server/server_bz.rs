@@ -1,21 +1,20 @@
-use crate::server::headers;
-use crate::{server::args_parser::Args, shell::handling::analyze_syntatically};
-use std::ffi::OsStr;
-use std::io::{self, BufRead, BufReader, Read, Write};
+use crate::{
+    server::{config::Config, headers},
+    shell::handling::analyze_syntatically,
+};
+use std::io::{self, Read};
 use std::net::{TcpListener, TcpStream};
-use std::path::Path;
 
 pub fn server_run(args: Vec<String>) -> io::Result<()> {
-    let mut config = Args::parse(args).unwrap();
-    let blz_file = Path::new(&config.blz_file);
-    /*
-        if !blz_file.exists() || blz_file.extension().unwrap_or(OsStr::new("")) != "blz" {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                "blz_file not found",
-            ));
-        }
-    */
+    let config = Config::args_parser(args).unwrap();
+
+    if !Config::blz_exist(&config.blz_file) {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "blz_file not found",
+        ));
+    }
+
     let ip = format!("{}:{}", config.ip, config.port);
     let listener = TcpListener::bind(ip)?;
 

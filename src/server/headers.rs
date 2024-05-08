@@ -23,12 +23,12 @@ pub fn del_headers(response: String) -> Option<String> {
     let mut is_empty_line = false;
 
     for line in response.lines() {
-        if line.is_empty() {
-            is_empty_line = true;
+        if is_empty_line {
+            return Some(line.to_string());
         }
 
-        if is_empty_line {
-            Some(line.to_string());
+        if line.is_empty() {
+            is_empty_line = true;
         }
     }
 
