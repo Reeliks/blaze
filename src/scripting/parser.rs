@@ -6,16 +6,17 @@ use super::ast::binary_operator::BinaryOperatorNode;
 use super::ast::boolean::BooleanNode;
 use super::ast::expression::ExpressionNode;
 use super::ast::function_declaration::FunctionDeclarationNode;
-use super::ast::unary_operator::UnaryOperatorNode;
-use super::ast::variable_declaration::VariableDeclaration;
 use super::ast::null::NullNode;
 use super::ast::number::NumberNode;
 use super::ast::object::ObjectNode;
 use super::ast::statements::StatementsNode;
 use super::ast::string::StringNode;
+use super::ast::unary_operator::UnaryOperatorNode;
+use super::ast::variable_declaration::VariableDeclaration;
 use super::context::Context;
 use super::tokens::{
-    Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS, VARIABLE_ASSIGNMENT_TOKENS
+    Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS,
+    VARIABLE_ASSIGNMENT_TOKENS,
 };
 use std::io::{self, Result};
 
@@ -331,8 +332,11 @@ impl Parser {
             operator if BINARY_OPERATOR_TOKENS.contains(&operator) => {
                 self.move_position()?;
                 let right_operand = self.parse_formula()?;
-                let binary_operator_node =
-                    Box::new(BinaryOperatorNode::new(operator, left_operand, right_operand));
+                let binary_operator_node = Box::new(BinaryOperatorNode::new(
+                    operator,
+                    left_operand,
+                    right_operand,
+                ));
                 Ok(binary_operator_node)
             }
             operator if UNARY_OPERATOR_TOKENS.contains(&operator) => {
@@ -345,11 +349,10 @@ impl Parser {
                             self.context.code_source,
                             first_token.line + 1,
                             first_token.start + 1
-                        )
+                        ),
                     ));
                 };
-                let unary_operator_node =
-                    Box::new(UnaryOperatorNode::new(operator, left_operand));
+                let unary_operator_node = Box::new(UnaryOperatorNode::new(operator, left_operand));
                 Ok(unary_operator_node)
             }
             _ => {
