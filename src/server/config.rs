@@ -25,7 +25,7 @@ impl Config {
             .next()
     }
 
-    pub fn blz_exist(path: &String) -> bool {
+    pub fn blz_exists(path: &String) -> bool {
         let blz_file = Path::new(&path);
 
         if !blz_file.exists() || blz_file.extension().unwrap_or(OsStr::new("")) != "blz" {

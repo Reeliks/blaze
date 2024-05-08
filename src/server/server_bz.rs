@@ -8,7 +8,7 @@ use std::net::{TcpListener, TcpStream};
 pub fn server_run(args: Vec<String>) -> io::Result<()> {
     let config = Config::args_parser(args).unwrap();
 
-    if !Config::blz_exist(&config.blz_file) {
+    if !Config::blz_exists(&config.blz_file) {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
             "blz_file not found",

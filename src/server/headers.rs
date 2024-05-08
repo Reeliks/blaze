@@ -21,10 +21,11 @@ pub fn parse_header(response: String) -> Option<HashMap<String, String>> {
 
 pub fn del_headers(response: String) -> Option<String> {
     let mut is_empty_line = false;
+    let mut data = String::new();
 
     for line in response.lines() {
         if is_empty_line {
-            return Some(line.to_string());
+            data.push_str(line);
         }
 
         if line.is_empty() {
@@ -32,5 +33,9 @@ pub fn del_headers(response: String) -> Option<String> {
         }
     }
 
-    None
+    if data.is_empty() {
+        return None;
+    }
+
+    Some(data)
 }
