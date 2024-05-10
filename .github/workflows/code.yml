@@ -19,6 +19,8 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
+          targets: nightly-x86_64-unknown-linux-gnu
+          components: rust-src
 
       - name: Check formatting
         run: cargo fmt -- --check
