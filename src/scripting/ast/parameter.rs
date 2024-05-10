@@ -6,6 +6,8 @@ pub struct Parameter {
     name: String,
     datatype: Option<String>,
     value: Option<Box<dyn ExpressionNode>>
+    // Value field can either store a transmitted value
+    // or contain a default value for functions, plans, and tables.
 }
 
 impl Parameter {

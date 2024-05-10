@@ -7,7 +7,7 @@ pub mod function_declaration;
 pub mod variable_declaration;
 pub mod null;
 pub mod number;
-pub mod object;
+pub mod identifier;
 pub mod string;
 pub mod member;
 pub mod call;

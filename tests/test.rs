@@ -25,7 +25,8 @@ fn test_lexer() {
 }
 
 fn parser(code: String) -> std::io::Result<bool> {
-    let code_lexer = Lexer::new(code);
+    let mut code_lexer = Lexer::new(code);
+    code_lexer.get_context().code_source = "Tests".to_string();
     let tokens = code_lexer.analyze()?;
 
     let mut code_parser = Parser::new(tokens.clone());
