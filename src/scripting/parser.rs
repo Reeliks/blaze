@@ -60,14 +60,13 @@ impl Parser {
                             println!("{}", err);
                             return Ok(BodyNode::new());
                         };
-                    }
-                    else {
-                        break;
+                        continue
                     };
+                    break
                 }
                 Ok(None) => break,
-                Err(e) => {
-                    println!("{}", e);
+                Err(error) => {
+                    println!("{}", error);
                     return Ok(BodyNode::new());
                 }
             }
@@ -466,11 +465,10 @@ impl Parser {
                 {
                     prohibited_unary_operator_types
                         .extend(vec![TokenType::Increment, TokenType::Decrement]);
+                    continue;
                 }
-                else {
-                    prohibited_unary_operator_types
-                        .push(current_unary_operator_token.token_type);
-                };
+                prohibited_unary_operator_types
+                    .push(current_unary_operator_token.token_type);
                 continue
             }
             break;

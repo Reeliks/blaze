@@ -33,7 +33,7 @@ impl Parameter {
 
     pub fn new_calling(name: Option<String>, value: Box<dyn ExpressionNode>) -> Self {
         Parameter {
-            name: if name.is_none() {String::new()} else {name.unwrap()},
+            name: name.unwrap_or_default(),
             datatype: None,
             value: Some(value)
         }

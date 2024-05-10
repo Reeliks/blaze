@@ -6,25 +6,25 @@ use crate::server::server_bz;
 
 pub fn handle_command_arguments() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() >= 2 {
-        match args[1].as_str() {
-            "create" => create_db_with_console()?,
-            "run" => server_bz::server_run(args)?,
-            "lexer" => {
-                let text = input_text()?;
-                analyze_lexically(text)?;
-            }
-            "parser" => {
-                let text = input_text()?;
-                analyze_syntatically(text)?;
-            }
-            _ => {
-                eprintln!("Invalid arguments");
-                std::process::exit(1);
-            }
-        }
-    } else {
+    if args.len() < 2 {
         print_help_section();
+        return Ok(());
+    };
+    match args[1].as_str() {
+        "create" => create_db_with_console()?,
+        "run" => server_bz::server_run(args)?,
+        "lexer" => {
+            let text = input_text()?;
+            analyze_lexically(text)?;
+        }
+        "parser" => {
+            let text = input_text()?;
+            analyze_syntatically(text)?;
+        }
+        _ => {
+            eprintln!("Invalid arguments");
+            std::process::exit(1);
+        }
     }
     Ok(())
 }
