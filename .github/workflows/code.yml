@@ -19,14 +19,14 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
-          targets: nightly-x86_64-unknown-linux-gnu
+          override: true
           components: rustfmt, clippy, miri
 
       - name: Check formatting
         run: cargo fmt -- --check
 
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run Miri
         run: cargo miri test
