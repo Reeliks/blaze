@@ -19,17 +19,17 @@ pub fn parse_header(response: String) -> Option<HashMap<String, String>> {
     Some(header)
 }
 
-pub fn del_headers(response: String) -> Option<String> {
-    let mut is_empty_line = false;
+pub fn remove_empty_line(response: String) -> Option<String> {
+    let mut empty_line_found = false;
     let mut data = String::new();
 
     for line in response.lines() {
-        if is_empty_line {
+        if empty_line_found {
             data.push_str(line);
         }
 
-        if line.is_empty() {
-            is_empty_line = true;
+        if line.is_empty() && !empty_line_found {
+            empty_line_found = true;
         }
     }
 

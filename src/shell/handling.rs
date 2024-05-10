@@ -1,10 +1,8 @@
 use crate::scripting::tokens::Token;
 use std::io::{self, Result};
 use crate::db::create_db;
-use crate::scripting::tokens::Token;
 use crate::scripting::{lexer, parser};
 use crate::server::server_bz;
-use std::io::{self, Result};
 
 pub fn handle_command_arguments() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
