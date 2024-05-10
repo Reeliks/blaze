@@ -5,13 +5,13 @@ use super::ast::binary_operator::BinaryOperatorNode;
 use super::ast::boolean::BooleanNode;
 use super::ast::expression::ExpressionNode;
 use super::ast::function_declaration::FunctionDeclarationNode;
-use super::ast::unary_operator::UnaryOperatorNode;
-use super::ast::variable_declaration::VariableDeclaration;
 use super::ast::null::NullNode;
 use super::ast::number::NumberNode;
 use super::ast::identifier::IdentifierNode;
 use super::ast::body::BodyNode;
 use super::ast::string::StringNode;
+use super::ast::unary_operator::UnaryOperatorNode;
+use super::ast::variable_declaration::VariableDeclaration;
 use super::context::Context;
 use super::tokens::{
     Token, 
@@ -450,7 +450,6 @@ impl Parser {
         {
             return Ok(None);
         };
-
         loop {
             if UNARY_OPERATOR_TOKENS.contains(&self.get_current_token().unwrap().token_type) {
                 let current_unary_operator_token = self.get_current_token().unwrap();
