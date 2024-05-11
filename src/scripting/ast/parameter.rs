@@ -5,29 +5,28 @@ use super::expression::ExpressionNode;
 pub struct Parameter {
     name: String,
     datatype: Option<String>,
-    value: Option<Box<dyn ExpressionNode>>
-    // Value field can either store a transmitted value
-    // or contain a default value for functions, plans, and tables.
+    value: Option<Box<dyn ExpressionNode>>, // Value field can either store a transmitted value
+                                            // or contain a default value for functions, plans, and tables.
 }
 
 impl Parameter {
     pub fn new(
-        name: String, 
-        datatype: Option<String>, 
-        value: Option<Box<dyn ExpressionNode>>
+        name: String,
+        datatype: Option<String>,
+        value: Option<Box<dyn ExpressionNode>>,
     ) -> Self {
-        Parameter { 
-            name, 
-            datatype, 
-            value
+        Parameter {
+            name,
+            datatype,
+            value,
         }
     }
 
     pub fn new_functional(name: String, datatype: String) -> Self {
-        Parameter { 
-            name, 
-            datatype: Some(datatype), 
-            value: None
+        Parameter {
+            name,
+            datatype: Some(datatype),
+            value: None,
         }
     }
 
@@ -35,7 +34,7 @@ impl Parameter {
         Parameter {
             name: name.unwrap_or_default(),
             datatype: None,
-            value: Some(value)
+            value: Some(value),
         }
     }
 }
@@ -45,5 +44,5 @@ pub type Parameters = Vec<Parameter>;
 #[derive(Debug, Display, PartialEq, Clone)]
 pub enum ParameterType {
     Function,
-    Call
+    Call,
 }

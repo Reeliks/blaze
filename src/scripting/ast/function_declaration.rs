@@ -1,5 +1,5 @@
-use super::parameter::Parameters;
 use super::expression::ExpressionNode;
+use super::parameter::Parameters;
 
 pub struct FunctionDeclarationNode {
     name: String,

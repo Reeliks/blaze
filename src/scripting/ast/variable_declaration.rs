@@ -8,9 +8,9 @@ pub struct VariableDeclaration {
 
 impl VariableDeclaration {
     pub fn new(
-        name: String, 
-        datatype: Option<String>, 
-        value: Option<Box<dyn ExpressionNode>>
+        name: String,
+        datatype: Option<String>,
+        value: Option<Box<dyn ExpressionNode>>,
     ) -> Self {
         VariableDeclaration {
             name,
