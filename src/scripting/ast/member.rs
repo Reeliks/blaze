@@ -1,14 +1,17 @@
 use super::expression::ExpressionNode;
 
 pub struct MemberNode {
-    parent: Box<dyn ExpressionNode>,
-    child: Box<dyn ExpressionNode>,
+    _parent: Box<dyn ExpressionNode>,
+    _child: Box<dyn ExpressionNode>,
 }
 
 impl ExpressionNode for MemberNode {}
 
 impl MemberNode {
     pub fn new(parent: Box<dyn ExpressionNode>, child: Box<dyn ExpressionNode>) -> Self {
-        MemberNode { parent, child }
+        MemberNode {
+            _parent: parent,
+            _child: child,
+        }
     }
 }

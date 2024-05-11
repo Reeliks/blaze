@@ -45,7 +45,7 @@ pub fn create_db_with_console() -> Result<()> {
     let mut path = String::new();
     println!("Specify a path to a datablaze");
     io::stdin().read_line(&mut path)?;
-    create_db::create_db_structure(path.trim(), true)?;
+    create_db::create_db_structure(path.trim())?;
 
     Ok(())
 }

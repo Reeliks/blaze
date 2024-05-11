@@ -54,7 +54,7 @@ fn test_parser() {
 
 #[test]
 fn test_cteate_db() {
-    let is_create = create_db::create_db_structure("./db".trim(), true).is_ok();
+    let is_create = create_db::create_db_structure("./db".trim()).is_ok();
     assert!(is_create);
 }
 
@@ -63,7 +63,7 @@ fn test_header_parser() {
     let response = "POST / HTTP/1.1\nHost: localhost:3300\nUser-Agent: curl/8.7.1\nAccept: */*\nPassword: 1221\n"
     .to_string();
 
-    let hashmap = headers::parse_header(response.clone()).unwrap();
+    let hashmap = headers::parse_header(response).unwrap();
     if let Some(value) = hashmap.get("Password") {
         assert!(value == "1221");
     }
