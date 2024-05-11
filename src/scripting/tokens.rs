@@ -15,6 +15,11 @@ impl Token {
     }
 }
 
+pub enum TokenSide {
+    Left,
+    Right,
+}
+
 // It's necessary to put tokens that structure more longer ones
 // below in order to make sure the lexer recognizes tokens properly.
 #[derive(Debug, EnumIter, Display, Clone, PartialEq)]
@@ -31,6 +36,8 @@ pub enum TokenType {
     Break,
     Return,
     // Unary Operators
+    Negotion,
+    Link,
     Increment,
     Decrement,
     // Binary Operators
@@ -94,6 +101,8 @@ impl TokenType {
             TokenType::Continue => r"continue\b",
             TokenType::Break => r"break\b",
             TokenType::Return => r"return\b",
+            TokenType::Negotion => r"\!",
+            TokenType::Link => r"&",
             TokenType::Increment => r"\+\+",
             TokenType::Decrement => r"\-\-",
             TokenType::Addition => r"\+",
@@ -149,15 +158,25 @@ pub const BINARY_OPERATOR_TOKENS: [TokenType; 12] = [
     TokenType::Assign,
 ];
 
-pub const UNARY_OPERATOR_TOKENS: [TokenType; 2] = [TokenType::Increment, TokenType::Decrement];
+pub const UNARY_OPERATOR_TOKENS: [TokenType; 4] = [
+    TokenType::Increment,
+    TokenType::Decrement,
+    TokenType::Negotion,
+    TokenType::Link,
+];
 
-pub const FORMULA_TOKENS: [TokenType; 6] = [
+// The tokens formulas can start with.
+pub const FORMULA_TOKENS: [TokenType; 10] = [
     TokenType::CharArray,
     TokenType::Number,
     TokenType::Alphanumeric,
     TokenType::True,
     TokenType::False,
     TokenType::Null,
+    TokenType::Increment,
+    TokenType::Decrement,
+    TokenType::Negotion,
+    TokenType::Link,
 ];
 
 pub const VARIABLE_ASSIGNMENT_TOKENS: [TokenType; 2] = [TokenType::Mut, TokenType::Fin];

@@ -1,23 +1,24 @@
-use colored::*;
-use rand::seq::SliceRandom;
-
-use super::ast::arguments::{FunctionArgument, PassedArgument};
 use super::ast::binary_operator::BinaryOperatorNode;
+use super::ast::body::BodyNode;
 use super::ast::boolean::BooleanNode;
+use super::ast::call::CallNode;
 use super::ast::expression::ExpressionNode;
 use super::ast::function_declaration::FunctionDeclarationNode;
+use super::ast::identifier::IdentifierNode;
+use super::ast::member::MemberNode;
 use super::ast::null::NullNode;
 use super::ast::number::NumberNode;
-use super::ast::object::ObjectNode;
-use super::ast::statements::StatementsNode;
+use super::ast::parameter::{Parameter, ParameterType, Parameters};
 use super::ast::string::StringNode;
 use super::ast::unary_operator::UnaryOperatorNode;
 use super::ast::variable_declaration::VariableDeclaration;
 use super::context::Context;
 use super::tokens::{
-    Token, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS,
+    Token, TokenSide, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS,
     VARIABLE_ASSIGNMENT_TOKENS,
 };
+use colored::*;
+use rand::seq::SliceRandom;
 use std::io::{self, Result};
 
 pub struct Parser {
@@ -35,8 +36,8 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<StatementsNode> {
-        let mut root = StatementsNode::new();
+    pub fn parse(&mut self) -> Result<BodyNode> {
+        let mut root = BodyNode::new();
         let mut add_node = |node: Box<dyn ExpressionNode>| {
             root.add_node(node);
         };
@@ -46,25 +47,21 @@ impl Parser {
                 Ok(Some(..)) => {
                     let parsed_expression = parsed_expression?;
                     add_node(parsed_expression.unwrap());
-                    if self.is_position_movable() {
-                        self.move_position()?;
+                    if self.move_if_position_is_movable() {
                         let semicolon_required = self.require_token(vec![TokenType::ExpressionEnd]);
                         if semicolon_required.is_err() {
                             let err = semicolon_required.unwrap_err();
                             println!("{}", err);
-                            return Ok(StatementsNode::new());
+                            return Ok(BodyNode::new());
                         };
+                        continue;
                     };
-                    if self.is_position_movable() {
-                        self.move_position()?
-                    } else {
-                        break;
-                    }
+                    break;
                 }
                 Ok(None) => break,
-                Err(e) => {
-                    println!("{}", e);
-                    return Ok(StatementsNode::new());
+                Err(error) => {
+                    eprintln!("{}", error);
+                    return Ok(BodyNode::new());
                 }
             }
         }
@@ -75,43 +72,65 @@ impl Parser {
         &mut self.context
     }
 
-    pub fn get_current_token(&mut self) -> Result<Token> {
+    fn get_current_token(&mut self) -> Result<Token> {
         if self.parser_position < self.tokens.len() as u64 {
             let current_token = self.tokens[self.parser_position as usize].clone();
-            // There is no reason to start line and position variables from zero
-            // since a parser is not supposed to work with code, but with tokens instead.
             return Ok(current_token);
         }
         Err(io::Error::new(
             io::ErrorKind::Other,
             format!(
-                "{}{}",
-                "FATAL".bright_red(),
+                "{}: {}",
+                "FATAL".red(),
                 "Attempted to access a non-existent token"
             ),
         ))
     }
 
-    pub fn move_position(&mut self) -> Result<()> {
-        let current_token = self.get_current_token()?;
+    fn move_position(&mut self) -> Token {
+        let current_token = self.get_current_token().unwrap();
         self.parser_position += 1;
+        // There is no reason to start line and position variables from zero
+        // since a parser is not supposed to work with code, but with tokens instead.
         self.context.line = current_token.line + 1;
         self.context.position = current_token.start + 1;
-        Ok(())
+        current_token
     }
 
-    pub fn move_position_back(&mut self) {
+    fn move_position_back(&mut self) {
         self.parser_position -= 1;
         let current_token = self.get_current_token().unwrap();
         self.context.line = current_token.line + 1;
         self.context.position = current_token.start + 1;
     }
 
-    pub fn is_position_movable(&self) -> bool {
+    fn is_position_movable(&self) -> bool {
         self.parser_position + 1 < self.tokens.len() as u64
     }
 
-    pub fn require_token(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
+    fn move_if_position_is_movable(&mut self) -> bool {
+        if !self.is_position_movable() {
+            return false;
+        }
+        self.move_position();
+        true
+    }
+
+    fn move_if_next_token_is(&mut self, desired_types: Vec<TokenType>) -> bool {
+        if !self.move_if_position_is_movable() {
+            return false;
+        };
+        if desired_types
+            .into_iter()
+            .any(|x| x == self.get_current_token().unwrap().token_type)
+        {
+            return true;
+        };
+        self.move_position_back();
+        false
+    }
+
+    fn require_token(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
         let current_token = self.get_current_token();
         if current_token.is_ok()
             && expected_tokens
@@ -125,12 +144,14 @@ impl Parser {
         current_token
     }
 
-    pub fn raise_expected_tokens_error(&mut self, expected_tokens: Vec<TokenType>) -> Result<()> {
+    fn raise_expected_tokens_error(&mut self, expected_tokens: Vec<TokenType>) -> Result<()> {
+        let mut shuffled_tokens = expected_tokens;
+        shuffled_tokens.shuffle(&mut rand::thread_rng());
         let error_message = format!(
             "{}{}{}{}",
-            "Syntax Error".to_owned().bright_red(),
+            "Syntax Error".bright_red(),
             ": ",
-            &match &expected_tokens[..] {
+            &match &shuffled_tokens[..] {
                 [] => "void".to_string(),
                 [first] => format!("'{}' is", first),
                 [first, second] => format!("'{}' or '{}' are", first, second),
@@ -139,8 +160,6 @@ impl Parser {
                     format!("{}, {}, {}, or {} are", first, second, third, fourth)
                 }
                 _ => {
-                    let mut shuffled_tokens = expected_tokens.clone();
-                    shuffled_tokens.shuffle(&mut rand::thread_rng());
                     format!(
                         "'{}', '{}', '{}', or one of {} other tokens are",
                         shuffled_tokens[0],
@@ -152,53 +171,50 @@ impl Parser {
             },
             &format!(
                 " expected <-= {}:{}:{}",
-                self.context.code_source.clone(),
-                self.context.line,
-                self.context.position
+                self.context.code_source, self.context.line, self.context.position
             )
         );
         Err(io::Error::new(io::ErrorKind::Other, error_message))
     }
 
-    pub fn parse_expression(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
+    fn parse_expression(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
         if self.get_current_token().is_err() {
             return Ok(None);
         };
         let current_token = self.get_current_token()?;
-        self.move_position()?;
+        self.move_position();
         match current_token.token_type {
             x if VARIABLE_ASSIGNMENT_TOKENS.contains(&x) => {
-                let variable_token
+                let name_token
                     = self.require_token(vec![TokenType::Alphanumeric])?;
-                self.move_position()?;
+                self.move_position();
                 let datatype = self.parse_datatype()?;
-                if datatype.is_some() {
-                    self.move_position()?
+                if datatype.is_none() {
+                    self.move_position_back();
                 };
-                self.require_token(vec![TokenType::Assign])?;
-                self.move_position()?;
+                let value_node  = self.parse_assignment()?;
                 Ok(Some(
                     Box::new(
                         VariableDeclaration::new(
-                        variable_token.value,
+                        name_token.value,
                         datatype,
-                        self.parse_formula()?
+                        value_node
                     )))
                 )
             }
             x if FORMULA_TOKENS.contains(&x) => {
                 self.move_position_back();
-                let formula_node = self.parse_formula()?;
+                let formula_node = self.require_formula()?;
                 Ok(Some(formula_node))
             }
             TokenType::Function => {
                 let name_token =
                     self.require_token(vec![TokenType::Alphanumeric])?;
-                self.move_position()?;
+                self.move_position();
                 let arguments
-                    = self.parse_function_arguments()?;
-                self.move_position()?;
-                let datatype = self.parse_datatype()?.clone();
+                    = self.parse_parameters_in_parenthesis(ParameterType::Function)?;
+                self.move_position();
+                let datatype = self.parse_datatype()?;
                 if datatype.is_none() {
                     self.move_position_back();
                 }
@@ -213,152 +229,261 @@ impl Parser {
             }
             TokenType::ExpressionEnd => {
                 Ok(self.parse_expression()?)
-            }
+           }
             _ => {
                 Err(io::Error::new(
                     io::ErrorKind::Other,
-                        format!(
-                            "{}: {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
-                            "Syntax Error".bright_red(),
-                            current_token.token_type,
-                            self.context.code_source,
-                            self.context.line,
-                            self.context.position
-                        )
+                    format!(
+                        "{}: {} hasn't been implemented yet or is not being considered in this context <-= at {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        current_token.token_type,
+                        self.context.code_source,
+                        self.context.line,
+                        self.context.position
+                    )
                 ))
             }
         }
     }
 
-    pub fn parse_datatype(&mut self) -> Result<Option<String>> {
+    fn parse_datatype(&mut self) -> Result<Option<String>> {
         let current_token = self.get_current_token();
-        if current_token.is_ok() && current_token.unwrap().is_type(TokenType::Colon) {
-            self.move_position()?;
+        if current_token.is_ok() && current_token?.is_type(TokenType::Colon) {
+            self.move_position();
             let datatype_token = self.require_token(vec![TokenType::Alphanumeric])?;
             return Ok(Some(datatype_token.value));
         };
         Ok(None)
     }
 
-    pub fn parse_function_arguments(&mut self) -> Result<Vec<FunctionArgument>> {
-        let mut arguments: Vec<FunctionArgument> = vec![];
-        self.require_token(vec![TokenType::LPar])?;
-        loop {
-            if !self.is_position_movable() {
-                self.raise_expected_tokens_error(vec![TokenType::RPar])?;
-            }
-            self.move_position()?;
-            let mut current_token = self.get_current_token().unwrap();
+    fn parse_assignment(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
+        if self.get_current_token().is_ok() && self.move_if_next_token_is(vec![TokenType::Assign]) {
+            self.move_position();
+            let value_node = self.require_formula()?;
+            return Ok(Some(value_node));
+        }
+        Ok(None)
+    }
 
-            if !arguments.is_empty() && current_token.is_type(TokenType::Comma) {
-                self.move_position()?;
-                current_token = self.require_token(vec![TokenType::Alphanumeric])?;
+    fn parse_parameters_in_parenthesis(
+        &mut self,
+        parameter_type: ParameterType,
+    ) -> Result<Parameters> {
+        self.require_token(vec![TokenType::LPar])?;
+        self.move_position();
+        let arguments = self.parse_parameters(parameter_type)?;
+        let _ = self.move_position();
+        self.require_token(vec![TokenType::RPar])?;
+        Ok(arguments)
+    }
+
+    fn parse_parameters(&mut self, parameter_type: ParameterType) -> Result<Parameters> {
+        let mut arguments: Parameters = vec![];
+
+        let _is_calling_parameter = parameter_type == ParameterType::Call;
+
+        let mut keyword_arguments_time: bool = false;
+        let _check_if_incorrect_argument_sequence = |is_keyword_argument: bool, this: &mut Self| {
+            if !is_keyword_argument && keyword_arguments_time {
+                let current_token = this.get_current_token()?;
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                        "{}: Positional argument follows keyword argument <-= at {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        this.context.code_source,
+                        current_token.line + 1,
+                        current_token.start + 1
+                    ),
+                ));
+            };
+            if is_keyword_argument {
+                keyword_arguments_time = true;
+            };
+            Ok(())
+        };
+
+        loop {
+            if self.get_current_token().is_err() {
+                self.move_position_back();
+                break;
             };
 
-            match current_token.token_type {
-                TokenType::Alphanumeric => {
-                    self.move_position()?;
-                    let argument_datatype = self.parse_datatype()?;
-                    if argument_datatype.is_none() {
-                        return Err(io::Error::new(
-                            io::ErrorKind::Other,
-                            format!(
-                                "{}: Argument type is expected <-= {}:{}:{}",
-                                "Syntax Error".bright_red(),
-                                self.context.code_source,
-                                self.context.line,
-                                self.context.position
-                            ),
-                        ));
-                    };
-                    arguments.push(FunctionArgument::new(
-                        current_token.value,
-                        argument_datatype.unwrap(),
-                    ));
+            let mut first_token = self.get_current_token()?;
+
+            if !arguments.is_empty() && first_token.is_type(TokenType::Comma) {
+                self.move_position();
+                if self.get_current_token().is_err() {
+                    return Ok(arguments);
                 }
-                TokenType::RPar => {
-                    break;
-                }
-                _ => {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!(
-                            "{}: Argument expected <-= {}:{}:{}",
-                            "Syntax Error".bright_red(),
-                            self.context.code_source,
-                            self.context.line,
-                            self.context.position
-                        ),
-                    ));
-                }
-            }
+                first_token = self.get_current_token()?;
+            };
+
+            let value_node = self.parse_formula()?;
+            if value_node.is_none() {
+                self.move_position_back();
+                break;
+            };
+            self.move_position();
+
+            let datatype_string = self
+                .parse_datatype()
+                .expect("Error occured while datatype parsing");
+            if datatype_string.is_none() && parameter_type == ParameterType::Function {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                        "{}: Argument type is expected <-= {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        self.context.code_source,
+                        self.context.line,
+                        self.context.position
+                    ),
+                ));
+            } else if datatype_string.is_some() && parameter_type == ParameterType::Call {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                        "{}: Call argument doesn't require type notation <-= {}:{}:{}",
+                        "Syntax Error".bright_red(),
+                        self.context.code_source,
+                        self.context.line,
+                        self.context.position
+                    ),
+                ));
+            } else if datatype_string.is_some() {
+                self.move_position();
+            };
+
+            arguments.push(Parameter::new(
+                first_token.value,
+                datatype_string,
+                Some(value_node.unwrap()),
+            ));
         }
         Ok(arguments)
     }
 
-    pub fn parse_passed_arguments(&mut self) -> Result<Vec<PassedArgument>> {
-        todo!()
-    }
-
-    pub fn parse_formula(&mut self) -> Result<Box<dyn ExpressionNode>> {
-        let first_token = self.require_token(FORMULA_TOKENS.to_vec())?;
-        let left_operand: Box<dyn ExpressionNode> = match first_token.token_type {
-            TokenType::Alphanumeric => Box::new(ObjectNode::new(first_token.clone().value)),
-            TokenType::CharArray => Box::new(StringNode::new(first_token.clone().value)),
-            TokenType::Number => Box::new(NumberNode::new(first_token.value.parse().unwrap())),
-            TokenType::Null => Box::new(NullNode),
-            TokenType::True | TokenType::False => {
-                Box::new(BooleanNode::new(first_token.token_type.clone()).unwrap())
-            }
-            _ => {
+    fn parse_identifiers(&mut self) -> Result<Box<dyn ExpressionNode>> {
+        let object_token = self.get_current_token()?;
+        let mut object_node: Box<dyn ExpressionNode> =
+            Box::new(IdentifierNode::new(object_token.value));
+        if self.move_if_next_token_is(vec![TokenType::LPar]) {
+            let arguments = self.parse_parameters_in_parenthesis(ParameterType::Call)?;
+            object_node = Box::new(CallNode::new(object_node, arguments));
+        };
+        if self.move_if_next_token_is(vec![TokenType::Dot]) {
+            if !self.move_if_position_is_movable() {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!(
-                        "{}: Value expected on assignment <-= at {}:{}:{}",
+                        "{}: Children expected <-= at {}:{}:{}",
                         "Syntax Error".bright_red(),
                         self.context.code_source,
-                        first_token.line + 1,
-                        first_token.start + 1
+                        self.context.line,
+                        self.context.position + 1
                     ),
                 ));
-            }
+            };
+            let next_member = self.parse_identifiers()?;
+            object_node = Box::new(MemberNode::new(object_node, next_member));
         };
-        if !self.is_position_movable() {
-            return Ok(left_operand);
-        }
-        self.move_position()?;
-        let second_token = self.get_current_token()?;
-        match second_token.token_type {
-            operator if BINARY_OPERATOR_TOKENS.contains(&operator) => {
-                self.move_position()?;
-                let right_operand = self.parse_formula()?;
-                let binary_operator_node = Box::new(BinaryOperatorNode::new(
-                    operator,
-                    left_operand,
-                    right_operand,
-                ));
-                Ok(binary_operator_node)
-            }
-            operator if UNARY_OPERATOR_TOKENS.contains(&operator) => {
-                if !first_token.is_type(TokenType::Alphanumeric) {
+        Ok(object_node)
+    }
+
+    fn parse_formula(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
+        let mut unary_operator_tokens: Vec<Token> = vec![];
+        let mut prohibited_unary_operator_types: Vec<TokenType> = vec![];
+
+        let is_unary_operator_prohibited =
+            move |token_to_check: Token, prohibited_types: Vec<TokenType>, this: &Self| {
+                if prohibited_types
+                    .into_iter()
+                    .any(|x| token_to_check.is_type(x))
+                {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
                         format!(
-                            "{}: Unary operator works only with objects <-= at {}:{}:{}",
+                            "{}: '{}' operator is already used <-= at {}:{}:{}",
                             "Syntax Error".bright_red(),
-                            self.context.code_source,
-                            first_token.line + 1,
-                            first_token.start + 1
+                            token_to_check.token_type,
+                            this.context.code_source,
+                            token_to_check.line,
+                            token_to_check.start
                         ),
                     ));
-                };
-                let unary_operator_node = Box::new(UnaryOperatorNode::new(operator, left_operand));
-                Ok(unary_operator_node)
+                }
+                Ok(())
+            };
+
+        if self.get_current_token().is_err()
+            || !FORMULA_TOKENS.contains(&self.get_current_token()?.token_type)
+        {
+            return Ok(None);
+        };
+        loop {
+            if UNARY_OPERATOR_TOKENS.contains(&self.get_current_token()?.token_type) {
+                let current_unary_operator_token = self.get_current_token()?;
+                unary_operator_tokens.push(current_unary_operator_token.clone());
+                is_unary_operator_prohibited(
+                    current_unary_operator_token.clone(),
+                    prohibited_unary_operator_types.clone(),
+                    self,
+                )?;
+                self.move_position();
+                if [TokenType::Increment, TokenType::Decrement]
+                    .into_iter()
+                    .any(|x| x == current_unary_operator_token.token_type)
+                {
+                    prohibited_unary_operator_types
+                        .extend(vec![TokenType::Increment, TokenType::Decrement]);
+                    continue;
+                }
+                prohibited_unary_operator_types.push(current_unary_operator_token.token_type);
+                continue;
+            }
+            break;
+        }
+        let formula_token = self.get_current_token()?;
+        let mut left_operand: Box<dyn ExpressionNode> = match formula_token.token_type {
+            TokenType::Alphanumeric => self.parse_identifiers()?,
+            TokenType::CharArray => Box::new(StringNode::new(formula_token.value)),
+            TokenType::Number => Box::new(NumberNode::new(formula_token.value.parse().unwrap())),
+            TokenType::Null => Box::new(NullNode),
+            TokenType::True | TokenType::False => {
+                Box::new(BooleanNode::new(formula_token.token_type)?)
             }
             _ => {
-                self.move_position_back();
-                Ok(left_operand)
+                self.raise_expected_tokens_error(FORMULA_TOKENS.to_vec())?;
+                Box::new(NullNode {})
             }
+        };
+        for unary_operator_token in unary_operator_tokens {
+            left_operand = Box::new(UnaryOperatorNode::new(
+                unary_operator_token.token_type,
+                left_operand,
+                TokenSide::Left,
+            ));
         }
+        if self.move_if_next_token_is(BINARY_OPERATOR_TOKENS.to_vec()) {
+            let operator = self.get_current_token()?;
+            self.move_position();
+            let right_operand = self.parse_formula()?.unwrap();
+            let binary_operator_node = Box::new(BinaryOperatorNode::new(
+                operator.token_type,
+                left_operand,
+                right_operand,
+            ));
+            return Ok(Some(binary_operator_node));
+        };
+        Ok(Some(left_operand))
+    }
+
+    fn require_formula(&mut self) -> Result<Box<dyn ExpressionNode>> {
+        let formula_node = self.parse_formula()?;
+        if formula_node.is_none() {
+            self.raise_expected_tokens_error(FORMULA_TOKENS.to_vec())?;
+        }
+        Ok(formula_node.unwrap())
     }
 }

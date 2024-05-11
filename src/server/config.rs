@@ -3,9 +3,9 @@ use regex::Regex;
 use std::{env, ffi::OsStr, path::Path};
 
 pub struct Config {
-    pub ip: String,
+    pub host: String,
     pub port: String,
-    pub blz_file: String,
+    pub manager_file: String,
     pub password: String,
 }
 
@@ -31,15 +31,14 @@ impl Config {
         if !blz_file.exists() || blz_file.extension().unwrap_or(OsStr::new("")) != "blz" {
             return false;
         }
-
         true
     }
 
-    pub fn args_parser(args: Vec<String>) -> Option<Self> {
+    pub fn parse_arguments(args: Vec<String>) -> Option<Self> {
         let default = Self::default();
-        let mut ip = default.ip;
+        let mut host = default.host;
         let mut port = default.port;
-        let mut blz_file = default.blz_file;
+        let mut manager_file = default.manager_file;
         let mut password = default.password;
 
         for arg in 0..args.len() {
@@ -56,26 +55,26 @@ impl Config {
             };
 
             match str.as_str() {
-                "-ip" => ip.clone_from(&value),
+                "-host" => host.clone_from(&value),
                 "-port" => port.clone_from(&value),
-                "-blz_file" => blz_file.clone_from(&value),
+                "-blz_file" => manager_file.clone_from(&value),
                 "-password" => password.clone_from(&value),
                 _ => (),
             }
         }
         Some(Config {
-            ip,
+            host,
             port,
-            blz_file,
+            manager_file,
             password,
         })
     }
 
     fn default() -> Self {
         Config {
-            ip: "localhost".to_string(),
+            host: "localhost".to_string(),
             port: "3306".to_string(),
-            blz_file: "./db/datablaze/manage.blz".to_string(),
+            manager_file: "./db/datablaze/manage.blz".to_string(),
             password: "password".to_string(),
         }
     }

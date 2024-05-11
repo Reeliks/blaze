@@ -26,7 +26,8 @@ fn test_lexer() {
 }
 
 fn parser(code: String) -> std::io::Result<bool> {
-    let code_lexer = Lexer::new(code);
+    let mut code_lexer = Lexer::new(code);
+    code_lexer.get_context().code_source = "Tests".to_string();
     let tokens = code_lexer.analyze()?;
 
     let mut code_parser = Parser::new(tokens.clone());
@@ -44,11 +45,16 @@ fn test_parser() {
     )
     .unwrap());
     assert!(!parser("9 * 12 import".to_string()).unwrap());
+    assert!(parser(
+        "mut best_apples: arr = grocery_store.get_best_product_instances(amount=5).result;"
+            .to_string()
+    )
+    .unwrap());
 }
 
 #[test]
 fn test_cteate_db() {
-    let is_create = create_db::create_db_structure("./db".trim(), true).is_ok();
+    let is_create = create_db::create_db_structure("./db".trim()).is_ok();
     assert!(is_create);
 }
 
@@ -57,7 +63,7 @@ fn test_header_parser() {
     let response = "POST / HTTP/1.1\nHost: localhost:3300\nUser-Agent: curl/8.7.1\nAccept: */*\nPassword: 1221\n"
     .to_string();
 
-    let hashmap = headers::parse_header(response.clone()).unwrap();
+    let hashmap = headers::parse_header(response).unwrap();
     if let Some(value) = hashmap.get("Password") {
         assert!(value == "1221");
     }

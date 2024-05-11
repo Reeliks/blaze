@@ -6,17 +6,17 @@ use std::io::{self, Read};
 use std::net::{TcpListener, TcpStream};
 
 pub fn server_run(args: Vec<String>) -> io::Result<()> {
-    let config = Config::args_parser(args).unwrap();
+    let config = Config::parse_arguments(args).unwrap();
 
-    if !Config::blz_exists(&config.blz_file) {
+    if !Config::blz_exists(&config.manager_file) {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
             "blz_file not found",
         ));
     }
 
-    let ip = format!("{}:{}", config.ip, config.port);
-    let listener = TcpListener::bind(ip)?;
+    let host = format!("{}:{}", config.host, config.port);
+    let listener = TcpListener::bind(host)?;
 
     for stream in listener.incoming() {
         let stream = stream?;
@@ -31,16 +31,15 @@ pub fn server_run(args: Vec<String>) -> io::Result<()> {
 fn handle_connection(mut stream: TcpStream, password: String) -> io::Result<()> {
     let mut buffer = [0; 1024];
     let mut request = String::new();
-
     let bytes_read = stream.read(&mut buffer)?;
     request.push_str(&String::from_utf8_lossy(&buffer[..bytes_read]));
 
-    let hashmap = headers::parse_header(request.clone()).unwrap();
-    if let Some(value) = hashmap.get("Password") {
+    let header = headers::parse_header(request.clone()).unwrap();
+    if let Some(value) = header.get("Password") {
         if password == *value {
-            analyze_syntatically(headers::del_headers(request).unwrap())?
-        }
-    }
+            analyze_syntatically(headers::remove_empty_line(request).unwrap())?
+        };
+    };
 
     Ok(())
 }

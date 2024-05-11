@@ -1,12 +1,12 @@
 use super::expression::ExpressionNode;
 
 pub struct NumberNode {
-    value: i64,
+    _value: f64,
 }
 
 impl NumberNode {
-    pub fn new(value: i64) -> Self {
-        NumberNode { value }
+    pub fn new(value: f64) -> Self {
+        NumberNode { _value: value }
     }
 }
 

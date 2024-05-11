@@ -6,25 +6,25 @@ use std::io::{self, Result};
 
 pub fn handle_command_arguments() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() >= 2 {
-        match args[1].as_str() {
-            "create" => create_db_with_console()?,
-            "run" => server_bz::server_run(args)?,
-            "lexer" => {
-                let text = input_text()?;
-                analyze_lexically(text)?;
-            }
-            "parser" => {
-                let text = input_text()?;
-                analyze_syntatically(text)?;
-            }
-            _ => {
-                eprintln!("Invalid arguments");
-                std::process::exit(1);
-            }
-        }
-    } else {
+    if args.len() < 2 {
         print_help_section();
+        return Ok(());
+    };
+    match args[1].as_str() {
+        "create" => create_db_with_console()?,
+        "run" => server_bz::server_run(args)?,
+        "lexer" => {
+            let text = input_text()?;
+            analyze_lexically(text)?;
+        }
+        "parser" => {
+            let text = input_text()?;
+            analyze_syntatically(text)?;
+        }
+        _ => {
+            eprintln!("Invalid arguments");
+            std::process::exit(1);
+        }
     }
     Ok(())
 }
@@ -45,7 +45,7 @@ pub fn create_db_with_console() -> Result<()> {
     let mut path = String::new();
     println!("Specify a path to a datablaze");
     io::stdin().read_line(&mut path)?;
-    create_db::create_db_structure(path.trim(), true)?;
+    create_db::create_db_structure(path.trim())?;
 
     Ok(())
 }
@@ -64,11 +64,13 @@ pub fn analyze_syntatically(code: String) -> Result<()> {
     code_parser
         .get_context()
         .set_code_source("Shell".to_string());
-    let nodes = code_parser.parse();
-    println!(
-        "Parsing successfully completed! Nodes Count: {}",
-        nodes?.nodes.len()
-    );
+    let nodes = code_parser.parse()?.nodes;
+    if !nodes.is_empty() {
+        println!(
+            "Parsing successfully completed! Nodes Count: {}",
+            nodes.len()
+        );
+    }
     Ok(())
 }
 

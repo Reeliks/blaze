@@ -1,18 +1,18 @@
-use super::arguments::FunctionArgument;
 use super::expression::ExpressionNode;
+use super::parameter::Parameters;
 
 pub struct FunctionDeclarationNode {
-    name: String,
-    datatype: Option<String>,
-    arguments: Vec<FunctionArgument>,
+    _name: String,
+    _datatype: Option<String>,
+    _arguments: Parameters,
 }
 
 impl FunctionDeclarationNode {
-    pub fn new(name: String, datatype: Option<String>, arguments: Vec<FunctionArgument>) -> Self {
+    pub fn new(name: String, datatype: Option<String>, arguments: Parameters) -> Self {
         FunctionDeclarationNode {
-            name,
-            datatype,
-            arguments,
+            _name: name,
+            _datatype: datatype,
+            _arguments: arguments,
         }
     }
 }

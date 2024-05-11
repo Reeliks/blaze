@@ -1,12 +1,12 @@
 use super::expression::ExpressionNode;
 
-pub struct StatementsNode {
+pub struct BodyNode {
     pub nodes: Vec<Box<dyn ExpressionNode>>,
 }
 
-impl StatementsNode {
+impl BodyNode {
     pub fn new() -> Self {
-        StatementsNode { nodes: vec![] }
+        BodyNode { nodes: vec![] }
     }
 
     pub fn add_node(&mut self, node: Box<dyn ExpressionNode>) {
@@ -14,9 +14,9 @@ impl StatementsNode {
     }
 }
 
-impl ExpressionNode for StatementsNode {}
+impl ExpressionNode for BodyNode {}
 
-impl Default for StatementsNode {
+impl Default for BodyNode {
     fn default() -> Self {
         Self::new()
     }
