@@ -1,15 +1,15 @@
-use super::{parameter::Parameters, expression::ExpressionNode};
+use super::{expression::ExpressionNode, parameter::Parameters};
 
 pub enum CallType {
     Function,
     Position,
-    Type
+    Type,
 }
 
 pub struct CallNode {
-    callee: Box<dyn ExpressionNode>,
-    arguments: Parameters,
-    call_type: CallType
+    _callee: Box<dyn ExpressionNode>,
+    _arguments: Parameters,
+    _call_type: CallType,
 }
 
 impl ExpressionNode for CallNode {}
@@ -17,9 +17,9 @@ impl ExpressionNode for CallNode {}
 impl CallNode {
     pub fn new(callee: Box<dyn ExpressionNode>, arguments: Parameters) -> Self {
         CallNode {
-            callee,
-            arguments,
-            call_type: CallType::Function
+            _callee: callee,
+            _arguments: arguments,
+            _call_type: CallType::Function,
         }
     }
 }

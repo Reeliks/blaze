@@ -34,8 +34,7 @@ fn handle_connection(mut stream: TcpStream, password: String) -> io::Result<()> 
     let bytes_read = stream.read(&mut buffer)?;
     request.push_str(&String::from_utf8_lossy(&buffer[..bytes_read]));
 
-    let header 
-        = headers::parse_header(request.clone()).unwrap();
+    let header = headers::parse_header(request.clone()).unwrap();
     if let Some(value) = header.get("Password") {
         if password == *value {
             analyze_syntatically(headers::remove_empty_line(request).unwrap())?

@@ -5,14 +5,14 @@ use crate::scripting::tokens::TokenType;
 use super::expression::ExpressionNode;
 
 pub struct BooleanNode {
-    state: bool,
+    _state: bool,
 }
 
 impl BooleanNode {
     pub fn new(token_type: TokenType) -> Result<Self, io::Error> {
         match token_type {
-            TokenType::True => Ok(BooleanNode { state: true }),
-            TokenType::False => Ok(BooleanNode { state: false }),
+            TokenType::True => Ok(BooleanNode { _state: true }),
+            TokenType::False => Ok(BooleanNode { _state: false }),
             _ => Err(io::Error::new(
                 io::ErrorKind::Other,
                 "Invalid value for a boolean node",

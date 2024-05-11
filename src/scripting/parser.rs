@@ -1,27 +1,24 @@
-use colored::*; use rand::seq::SliceRandom; use super::ast::call::CallNode;
-use super::ast::member::MemberNode;
-use super::ast::parameter::{Parameter, ParameterType, Parameters};
 use super::ast::binary_operator::BinaryOperatorNode;
+use super::ast::body::BodyNode;
 use super::ast::boolean::BooleanNode;
+use super::ast::call::CallNode;
 use super::ast::expression::ExpressionNode;
 use super::ast::function_declaration::FunctionDeclarationNode;
+use super::ast::identifier::IdentifierNode;
+use super::ast::member::MemberNode;
 use super::ast::null::NullNode;
 use super::ast::number::NumberNode;
-use super::ast::identifier::IdentifierNode;
-use super::ast::body::BodyNode;
+use super::ast::parameter::{Parameter, ParameterType, Parameters};
 use super::ast::string::StringNode;
 use super::ast::unary_operator::UnaryOperatorNode;
 use super::ast::variable_declaration::VariableDeclaration;
 use super::context::Context;
 use super::tokens::{
-    Token, 
-    TokenSide, 
-    TokenType, 
-    BINARY_OPERATOR_TOKENS, 
-    FORMULA_TOKENS, 
-    UNARY_OPERATOR_TOKENS, 
-    VARIABLE_ASSIGNMENT_TOKENS
+    Token, TokenSide, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS,
+    VARIABLE_ASSIGNMENT_TOKENS,
 };
+use colored::*;
+use rand::seq::SliceRandom;
 use std::io::{self, Result};
 
 pub struct Parser {
@@ -41,32 +38,29 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<BodyNode> {
         let mut root = BodyNode::new();
-        let mut add_node
-            = |node: Box<dyn ExpressionNode>| {
+        let mut add_node = |node: Box<dyn ExpressionNode>| {
             root.add_node(node);
         };
         loop {
-            let parsed_expression
-                = self.parse_expression();
+            let parsed_expression = self.parse_expression();
             match parsed_expression {
                 Ok(Some(..)) => {
                     let parsed_expression = parsed_expression?;
                     add_node(parsed_expression.unwrap());
                     if self.move_if_position_is_movable() {
-                        let semicolon_required
-                            = self.require_token(vec![TokenType::ExpressionEnd]);
+                        let semicolon_required = self.require_token(vec![TokenType::ExpressionEnd]);
                         if semicolon_required.is_err() {
                             let err = semicolon_required.unwrap_err();
                             println!("{}", err);
                             return Ok(BodyNode::new());
                         };
-                        continue
+                        continue;
                     };
-                    break
+                    break;
                 }
                 Ok(None) => break,
                 Err(error) => {
-                    println!("{}", error);
+                    eprintln!("{}", error);
                     return Ok(BodyNode::new());
                 }
             }
@@ -128,12 +122,12 @@ impl Parser {
         };
         if desired_types
             .into_iter()
-            .any(|x| x == self.get_current_token().unwrap().token_type) {
+            .any(|x| x == self.get_current_token().unwrap().token_type)
+        {
             return true;
         };
         self.move_position_back();
         false
-
     }
 
     fn require_token(&mut self, expected_tokens: Vec<TokenType>) -> Result<Token> {
@@ -151,7 +145,7 @@ impl Parser {
     }
 
     fn raise_expected_tokens_error(&mut self, expected_tokens: Vec<TokenType>) -> Result<()> {
-        let mut shuffled_tokens = expected_tokens.clone();
+        let mut shuffled_tokens = expected_tokens;
         shuffled_tokens.shuffle(&mut rand::thread_rng());
         let error_message = format!(
             "{}{}{}{}",
@@ -177,9 +171,7 @@ impl Parser {
             },
             &format!(
                 " expected <-= {}:{}:{}",
-                self.context.code_source.clone(),
-                self.context.line,
-                self.context.position
+                self.context.code_source, self.context.line, self.context.position
             )
         );
         Err(io::Error::new(io::ErrorKind::Other, error_message))
@@ -200,8 +192,7 @@ impl Parser {
                 if datatype.is_none() {
                     self.move_position_back();
                 };
-                let value_node 
-                    = self.parse_assignment()?;
+                let value_node  = self.parse_assignment()?;
                 Ok(Some(
                     Box::new(
                         VariableDeclaration::new(
@@ -223,8 +214,7 @@ impl Parser {
                 let arguments
                     = self.parse_parameters_in_parenthesis(ParameterType::Function)?;
                 self.move_position();
-                let datatype 
-                    = self.parse_datatype()?.clone();
+                let datatype = self.parse_datatype()?;
                 if datatype.is_none() {
                     self.move_position_back();
                 }
@@ -260,44 +250,40 @@ impl Parser {
         let current_token = self.get_current_token();
         if current_token.is_ok() && current_token?.is_type(TokenType::Colon) {
             self.move_position();
-            let datatype_token = 
-                self.require_token(vec![TokenType::Alphanumeric])?;
+            let datatype_token = self.require_token(vec![TokenType::Alphanumeric])?;
             return Ok(Some(datatype_token.value));
         };
         Ok(None)
-    } 
+    }
 
-    fn parse_assignment(&mut self,) -> Result<Option<Box<dyn ExpressionNode>>> {
-        if self.get_current_token().is_ok() 
-        && self.move_if_next_token_is(vec![TokenType::Assign]) {
+    fn parse_assignment(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
+        if self.get_current_token().is_ok() && self.move_if_next_token_is(vec![TokenType::Assign]) {
             self.move_position();
-            let value_node = 
-                self.require_formula()
-                ?;
+            let value_node = self.require_formula()?;
             return Ok(Some(value_node));
         }
         Ok(None)
     }
 
-    fn parse_parameters_in_parenthesis(&mut self, parameter_type: ParameterType) -> Result<Parameters> {
+    fn parse_parameters_in_parenthesis(
+        &mut self,
+        parameter_type: ParameterType,
+    ) -> Result<Parameters> {
         self.require_token(vec![TokenType::LPar])?;
         self.move_position();
-        let arguments 
-            = self.parse_parameters(parameter_type)?;
+        let arguments = self.parse_parameters(parameter_type)?;
         let _ = self.move_position();
         self.require_token(vec![TokenType::RPar])?;
         Ok(arguments)
-    } 
+    }
 
     fn parse_parameters(&mut self, parameter_type: ParameterType) -> Result<Parameters> {
         let mut arguments: Parameters = vec![];
 
-        let _is_calling_parameter 
-            = parameter_type == ParameterType::Call;
+        let _is_calling_parameter = parameter_type == ParameterType::Call;
 
         let mut keyword_arguments_time: bool = false;
-        let _check_if_incorrect_argument_sequence
-            = |is_keyword_argument: bool, this: &mut Self| {
+        let _check_if_incorrect_argument_sequence = |is_keyword_argument: bool, this: &mut Self| {
             if !is_keyword_argument && keyword_arguments_time {
                 let current_token = this.get_current_token()?;
                 return Err(io::Error::new(
@@ -308,7 +294,7 @@ impl Parser {
                         this.context.code_source,
                         current_token.line + 1,
                         current_token.start + 1
-                    )
+                    ),
                 ));
             };
             if is_keyword_argument {
@@ -318,38 +304,32 @@ impl Parser {
         };
 
         loop {
-            if self.get_current_token().is_err()
-            {
+            if self.get_current_token().is_err() {
                 self.move_position_back();
-                break;      
+                break;
             };
 
-            let mut first_token = 
-                self.get_current_token()?;
-            
-            if !arguments.is_empty() 
-            && first_token.is_type(TokenType::Comma) {
+            let mut first_token = self.get_current_token()?;
+
+            if !arguments.is_empty() && first_token.is_type(TokenType::Comma) {
                 self.move_position();
                 if self.get_current_token().is_err() {
                     return Ok(arguments);
                 }
-                first_token = 
-                    self.get_current_token()?;
+                first_token = self.get_current_token()?;
             };
 
-            let value_node 
-                = self.parse_formula()?;
+            let value_node = self.parse_formula()?;
             if value_node.is_none() {
                 self.move_position_back();
                 break;
             };
             self.move_position();
-            
-            let datatype_string 
-                = self.parse_datatype()
+
+            let datatype_string = self
+                .parse_datatype()
                 .expect("Error occured while datatype parsing");
-            if datatype_string.is_none()
-            && parameter_type == ParameterType::Function {
+            if datatype_string.is_none() && parameter_type == ParameterType::Function {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!(
@@ -360,9 +340,7 @@ impl Parser {
                         self.context.position
                     ),
                 ));
-            }
-            else if datatype_string.is_some()
-            && parameter_type == ParameterType::Call {
+            } else if datatype_string.is_some() && parameter_type == ParameterType::Call {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!(
@@ -371,17 +349,16 @@ impl Parser {
                         self.context.code_source,
                         self.context.line,
                         self.context.position
-                    )
+                    ),
                 ));
-            }
-            else if datatype_string.is_some() {
+            } else if datatype_string.is_some() {
                 self.move_position();
             };
 
             arguments.push(Parameter::new(
-                first_token.value, 
-                datatype_string, 
-                Some(value_node.unwrap())
+                first_token.value,
+                datatype_string,
+                Some(value_node.unwrap()),
             ));
         }
         Ok(arguments)
@@ -389,33 +366,27 @@ impl Parser {
 
     fn parse_identifiers(&mut self) -> Result<Box<dyn ExpressionNode>> {
         let object_token = self.get_current_token()?;
-        let mut object_node: Box<dyn ExpressionNode> 
-            =  Box::new(IdentifierNode::new(object_token.value));
+        let mut object_node: Box<dyn ExpressionNode> =
+            Box::new(IdentifierNode::new(object_token.value));
         if self.move_if_next_token_is(vec![TokenType::LPar]) {
-            let arguments
-                = self.parse_parameters_in_parenthesis(ParameterType::Call)?;
-            object_node = Box::new(
-                CallNode::new(object_node, arguments)
-            );
+            let arguments = self.parse_parameters_in_parenthesis(ParameterType::Call)?;
+            object_node = Box::new(CallNode::new(object_node, arguments));
         };
-        if self.move_if_next_token_is(vec![TokenType::Dot]) { 
+        if self.move_if_next_token_is(vec![TokenType::Dot]) {
             if !self.move_if_position_is_movable() {
                 return Err(io::Error::new(
-                    io::ErrorKind::Other, 
+                    io::ErrorKind::Other,
                     format!(
                         "{}: Children expected <-= at {}:{}:{}",
                         "Syntax Error".bright_red(),
                         self.context.code_source,
                         self.context.line,
                         self.context.position + 1
-                    )
+                    ),
                 ));
             };
-            let next_member 
-                = self.parse_identifiers()?;
-            object_node = Box::new(
-                MemberNode::new(object_node, next_member)
-            );
+            let next_member = self.parse_identifiers()?;
+            object_node = Box::new(MemberNode::new(object_node, next_member));
         };
         Ok(object_node)
     }
@@ -423,29 +394,30 @@ impl Parser {
     fn parse_formula(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
         let mut unary_operator_tokens: Vec<Token> = vec![];
         let mut prohibited_unary_operator_types: Vec<TokenType> = vec![];
-        
-        let is_unary_operator_prohibited
-            = move |token_to_check: Token, prohibited_types: Vec<TokenType>, this: &Self| {
-            if prohibited_types
-                .into_iter()
-                .any(|x| token_to_check.is_type(x)) {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!(
-                        "{}: '{}' operator is already used <-= at {}:{}:{}",
-                        "Syntax Error".bright_red(),
-                        token_to_check.token_type,
-                        this.context.code_source,
-                        token_to_check.line,
-                        token_to_check.start
-                    )
-                ));
-            }  
-            Ok(())
-        }; 
-        
+
+        let is_unary_operator_prohibited =
+            move |token_to_check: Token, prohibited_types: Vec<TokenType>, this: &Self| {
+                if prohibited_types
+                    .into_iter()
+                    .any(|x| token_to_check.is_type(x))
+                {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!(
+                            "{}: '{}' operator is already used <-= at {}:{}:{}",
+                            "Syntax Error".bright_red(),
+                            token_to_check.token_type,
+                            this.context.code_source,
+                            token_to_check.line,
+                            token_to_check.start
+                        ),
+                    ));
+                }
+                Ok(())
+            };
+
         if self.get_current_token().is_err()
-        || !FORMULA_TOKENS.contains(&self.get_current_token()?.token_type)
+            || !FORMULA_TOKENS.contains(&self.get_current_token()?.token_type)
         {
             return Ok(None);
         };
@@ -454,56 +426,55 @@ impl Parser {
                 let current_unary_operator_token = self.get_current_token()?;
                 unary_operator_tokens.push(current_unary_operator_token.clone());
                 is_unary_operator_prohibited(
-                    current_unary_operator_token.clone(), 
-                    prohibited_unary_operator_types.clone(), 
-                    self
+                    current_unary_operator_token.clone(),
+                    prohibited_unary_operator_types.clone(),
+                    self,
                 )?;
                 self.move_position();
                 if [TokenType::Increment, TokenType::Decrement]
-                .into_iter()
-                .any(|x| x == current_unary_operator_token.token_type) 
+                    .into_iter()
+                    .any(|x| x == current_unary_operator_token.token_type)
                 {
                     prohibited_unary_operator_types
                         .extend(vec![TokenType::Increment, TokenType::Decrement]);
                     continue;
                 }
-                prohibited_unary_operator_types
-                    .push(current_unary_operator_token.token_type);
-                continue
+                prohibited_unary_operator_types.push(current_unary_operator_token.token_type);
+                continue;
             }
             break;
-        };
+        }
         let formula_token = self.get_current_token()?;
-        let mut left_operand: Box<dyn ExpressionNode>
-            = match formula_token.token_type {
+        let mut left_operand: Box<dyn ExpressionNode> = match formula_token.token_type {
             TokenType::Alphanumeric => self.parse_identifiers()?,
-            TokenType::CharArray => Box::new(StringNode::new(formula_token.clone().value)),
+            TokenType::CharArray => Box::new(StringNode::new(formula_token.value)),
             TokenType::Number => Box::new(NumberNode::new(formula_token.value.parse().unwrap())),
             TokenType::Null => Box::new(NullNode),
             TokenType::True | TokenType::False => {
-                Box::new(BooleanNode::new(formula_token.token_type.clone())?)
+                Box::new(BooleanNode::new(formula_token.token_type)?)
             }
             _ => {
                 self.raise_expected_tokens_error(FORMULA_TOKENS.to_vec())?;
-                Box::new(NullNode{})  
+                Box::new(NullNode {})
             }
         };
         for unary_operator_token in unary_operator_tokens {
-            left_operand = Box::new(
-                UnaryOperatorNode::new(
-                    unary_operator_token.token_type.clone(), 
-                    left_operand,
-                    TokenSide::Left
-                )
-            );
-        };
+            left_operand = Box::new(UnaryOperatorNode::new(
+                unary_operator_token.token_type,
+                left_operand,
+                TokenSide::Left,
+            ));
+        }
         if self.move_if_next_token_is(BINARY_OPERATOR_TOKENS.to_vec()) {
             let operator = self.get_current_token()?;
             self.move_position();
             let right_operand = self.parse_formula()?.unwrap();
-            let binary_operator_node =
-                Box::new(BinaryOperatorNode::new(operator.token_type, left_operand, right_operand));
-            return Ok(Some(binary_operator_node))
+            let binary_operator_node = Box::new(BinaryOperatorNode::new(
+                operator.token_type,
+                left_operand,
+                right_operand,
+            ));
+            return Ok(Some(binary_operator_node));
         };
         Ok(Some(left_operand))
     }

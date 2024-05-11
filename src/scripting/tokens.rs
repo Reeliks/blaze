@@ -17,7 +17,7 @@ impl Token {
 
 pub enum TokenSide {
     Left,
-    Right
+    Right,
 }
 
 // It's necessary to put tokens that structure more longer ones
@@ -159,10 +159,10 @@ pub const BINARY_OPERATOR_TOKENS: [TokenType; 12] = [
 ];
 
 pub const UNARY_OPERATOR_TOKENS: [TokenType; 4] = [
-    TokenType::Increment, 
+    TokenType::Increment,
     TokenType::Decrement,
     TokenType::Negotion,
-    TokenType::Link
+    TokenType::Link,
 ];
 
 // The tokens formulas can start with.
@@ -176,8 +176,7 @@ pub const FORMULA_TOKENS: [TokenType; 10] = [
     TokenType::Increment,
     TokenType::Decrement,
     TokenType::Negotion,
-    TokenType::Link
+    TokenType::Link,
 ];
 
-pub const VARIABLE_ASSIGNMENT_TOKENS: [TokenType; 2] 
-    = [TokenType::Mut, TokenType::Fin];
+pub const VARIABLE_ASSIGNMENT_TOKENS: [TokenType; 2] = [TokenType::Mut, TokenType::Fin];

@@ -5,15 +5,15 @@ enum StringType {
 }
 
 pub struct StringNode {
-    value: String,
-    string_type: StringType,
+    _value: String,
+    _string_type: StringType,
 }
 
 impl StringNode {
     pub fn new(value: String) -> Self {
         StringNode {
-            value,
-            string_type: StringType::Basic,
+            _value: value,
+            _string_type: StringType::Basic,
         }
     }
 }

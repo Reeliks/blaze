@@ -1,8 +1,8 @@
-use crate::scripting::tokens::Token;
-use std::io::{self, Result};
 use crate::db::create_db;
+use crate::scripting::tokens::Token;
 use crate::scripting::{lexer, parser};
 use crate::server::server_bz;
+use std::io::{self, Result};
 
 pub fn handle_command_arguments() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -45,7 +45,7 @@ pub fn create_db_with_console() -> Result<()> {
     let mut path = String::new();
     println!("Specify a path to a datablaze");
     io::stdin().read_line(&mut path)?;
-    create_db::create_db_structure(path.trim(), true)?;
+    create_db::create_db_structure(path.trim())?;
 
     Ok(())
 }
@@ -66,7 +66,10 @@ pub fn analyze_syntatically(code: String) -> Result<()> {
         .set_code_source("Shell".to_string());
     let nodes = code_parser.parse()?.nodes;
     if !nodes.is_empty() {
-        println!("Parsing successfully completed! Nodes Count: {}", nodes.len());
+        println!(
+            "Parsing successfully completed! Nodes Count: {}",
+            nodes.len()
+        );
     }
     Ok(())
 }
