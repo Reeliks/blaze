@@ -66,7 +66,7 @@ impl Parser {
                 }
                 Ok(None) => break,
                 Err(error) => {
-                    println!("{}", error);
+                    eprintln!("{}", error);
                     return Ok(BodyNode::new());
                 }
             }
@@ -151,7 +151,7 @@ impl Parser {
     }
 
     fn raise_expected_tokens_error(&mut self, expected_tokens: Vec<TokenType>) -> Result<()> {
-        let mut shuffled_tokens = expected_tokens.clone();
+        let mut shuffled_tokens = expected_tokens;
         shuffled_tokens.shuffle(&mut rand::thread_rng());
         let error_message = format!(
             "{}{}{}{}",
@@ -177,7 +177,7 @@ impl Parser {
             },
             &format!(
                 " expected <-= {}:{}:{}",
-                self.context.code_source.clone(),
+                self.context.code_source,
                 self.context.line,
                 self.context.position
             )
@@ -477,11 +477,11 @@ impl Parser {
         let mut left_operand: Box<dyn ExpressionNode>
             = match formula_token.token_type {
             TokenType::Alphanumeric => self.parse_identifiers()?,
-            TokenType::CharArray => Box::new(StringNode::new(formula_token.clone().value)),
+            TokenType::CharArray => Box::new(StringNode::new(formula_token.value)),
             TokenType::Number => Box::new(NumberNode::new(formula_token.value.parse().unwrap())),
             TokenType::Null => Box::new(NullNode),
             TokenType::True | TokenType::False => {
-                Box::new(BooleanNode::new(formula_token.token_type.clone())?)
+                Box::new(BooleanNode::new(formula_token.token_type)?)
             }
             _ => {
                 self.raise_expected_tokens_error(FORMULA_TOKENS.to_vec())?;
@@ -491,7 +491,7 @@ impl Parser {
         for unary_operator_token in unary_operator_tokens {
             left_operand = Box::new(
                 UnaryOperatorNode::new(
-                    unary_operator_token.token_type.clone(), 
+                    unary_operator_token.token_type, 
                     left_operand,
                     TokenSide::Left
                 )

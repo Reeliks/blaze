@@ -4,20 +4,18 @@ use std::path::{Path, PathBuf};
 
 pub const OFFICIAL_REPOSITORY: &str = "https://github.com/Reeliks/blaze";
 
-pub fn create_db_structure(path_to_db: &str, creation_process_printing: bool) -> Result<()> {
+pub fn create_db_structure(path_to_db: &str) -> Result<()> {
     let mut db_workdir_path_buf = PathBuf::from(&path_to_db);
     db_workdir_path_buf.push("datablaze");
     create_db_folders(&db_workdir_path_buf)?;
 
     let is_manage_file_created: bool = create_manage_file(&db_workdir_path_buf)?;
-    if creation_process_printing {
-        if is_manage_file_created {
-            println!("manage.blz has been created")
-        } else {
-            println!("manage.blz already exists; skipping...");
-        }
-        println!("\nA new datablaze has been structured. Use 'blaze --help' to see the commands.\nTo contribute the development process, check out the official repository:\n{}", OFFICIAL_REPOSITORY);
+    if is_manage_file_created {
+        println!("manage.blz has been created")
+    } else {
+        println!("manage.blz already exists; skipping...");
     }
+    println!("\nA new datablaze has been structured. Use 'blaze --help' to see the commands.\nTo contribute the development process, check out the official repository:\n{}", OFFICIAL_REPOSITORY);
 
     Ok(())
 }
@@ -42,7 +40,6 @@ fn create_manage_file(path_to_db_buf: &Path) -> Result<bool> {
 attach "/data/main;"#;
 
     managing_file_path_buf.push("manage.blz");
-    recreate_directories(&managing_file_path_buf.clone())?;
     if let Err(e) = fs::metadata(managing_file_path_buf.to_str().unwrap()) {
         match e.kind() {
             std::io::ErrorKind::NotFound => {
@@ -56,11 +53,4 @@ attach "/data/main;"#;
         };
     };
     Ok(false)
-}
-
-fn recreate_directories(path_buf: &Path) -> Result<()> {
-    if let Some(parent_dir) = path_buf.parent() {
-        fs::create_dir_all(parent_dir)?;
-    };
-    Ok(())
 }
