@@ -1,16 +1,11 @@
 use bson::*;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Cursor, Read, Write};
 
 pub struct Fs {
     path: String,
-    pub tables: Vec<Tables>,
-}
-
-#[derive(Debug)]
-pub struct Tables {
-    pub name: String,
-    pub rows: Vec<Document>,
+    tables: HashMap<String, Vec<Document>>,
 }
 
 impl Fs {
@@ -24,43 +19,57 @@ impl Fs {
         Ok(Fs { path, tables })
     }
 
-    fn extract_tables(document: &Document) -> Result<Vec<Tables>, bson::de::Error> {
-        let mut tables = Vec::new();
+    fn extract_tables(
+        document: &Document,
+    ) -> Result<HashMap<String, Vec<Document>>, bson::de::Error> {
+        let mut tables: HashMap<String, Vec<Document>> = HashMap::new();
 
         for (key, value) in document {
-            if let Bson::Document(subdoc) = value {
-                let rows = vec![subdoc.clone()];
+            if let Bson::Array(subdoc) = value {
+                let rows: Vec<Document> = subdoc
+                    .iter()
+                    .filter_map(|bson| {
+                        if let Bson::Document(doc) = bson {
+                            Some(doc.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
                 let name = key.to_string();
 
-                let table = Tables { name, rows };
-                tables.push(table);
+                tables.insert(name, rows);
             }
         }
 
         Ok(tables)
     }
 
-    pub fn db_write(self, table_name: String, data: Document) -> Result<(), de::Error> {
+    pub fn db_write(mut self, table_name: String, data: Document) -> Result<(), de::Error> {
         let mut doc = Document::new();
 
-        for table in self.tables {
-            let mut test: Vec<Document> = table.rows.clone();
-            if table.name == table_name {
-                test.push(data.clone());
+        for (key, value) in &mut self.tables {
+            if *key == table_name {
+                value.push(data.clone());
+            } else {
+                doc.insert(table_name.clone(), Bson::Array(vec![Bson::from(data.clone())]));
             }
+        }
 
-            let bson_array: Vec<Bson> = test.into_iter().map(Bson::Document).collect();
-            doc.insert(table.name, Bson::Array(bson_array));
+        for (key, value) in self.tables {
+            let bson_array: Vec<Bson> = value.iter().map(Bson::from).collect();
+            doc.insert(key.to_string(), Bson::Array(bson_array));
         }
 
         if doc.is_empty() {
-            doc.insert(table_name, Bson::Document(data));
+            doc.insert(table_name, Bson::Array(vec![Bson::from(data.clone())]));
         }
 
         let mut buf = Vec::new();
         doc.to_writer(&mut buf).unwrap();
 
-        let mut file = File::open(self.path)?;
+        let mut file = File::create(self.path)?;
         file.write_all(&buf)?;
 
         let doc = Document::from_reader(&mut Cursor::new(&buf[..]))?;
