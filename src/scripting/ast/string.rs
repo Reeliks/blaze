@@ -18,4 +18,8 @@ impl StringNode {
     }
 }
 
-impl ExpressionNode for StringNode {}
+impl ExpressionNode for StringNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(StringNode)
+    }
+}

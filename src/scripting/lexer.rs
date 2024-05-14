@@ -82,8 +82,8 @@ impl Lexer {
             format!(
                 "{}: '{}' {} <-= at {}:{}:{}",
                 "Lexical Error".bright_red(),
-                positioned_code,
-                "isn't recognized",
+                positioned_code.trim(),
+                "is not recognized",
                 self.context.code_source,
                 self.context.line + 1,
                 self.context.position + 1
@@ -108,10 +108,8 @@ impl Lexer {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!(
-                        "{}\n\"{}{}\": numbers cannot end with alphanumeric <-= at {}:{}:{}",
+                        "{}: numbers cannot end with alphanumeric <-= at {}:{}:{}",
                         "Lexical Error".bright_red(),
-                        last_token.value,
-                        current_token.value,
                         self.context.code_source,
                         last_token.line + 1,
                         last_token.start + 1

@@ -4,6 +4,7 @@ use super::parameter::Parameters;
 pub struct FunctionDeclarationNode {
     _name: String,
     _datatype: Option<String>,
+    _generics: Vec<String>,
     _arguments: Parameters,
 }
 
@@ -12,9 +13,14 @@ impl FunctionDeclarationNode {
         FunctionDeclarationNode {
             _name: name,
             _datatype: datatype,
+            _generics: vec![],
             _arguments: arguments,
         }
     }
 }
 
-impl ExpressionNode for FunctionDeclarationNode {}
+impl ExpressionNode for FunctionDeclarationNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(FunctionDeclarationNode)
+    }
+}

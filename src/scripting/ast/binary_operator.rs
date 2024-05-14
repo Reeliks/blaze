@@ -22,4 +22,8 @@ impl BinaryOperatorNode {
     }
 }
 
-impl ExpressionNode for BinaryOperatorNode {}
+impl ExpressionNode for BinaryOperatorNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(BinaryOperatorNode)
+    }
+}

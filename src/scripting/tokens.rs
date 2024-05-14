@@ -63,6 +63,8 @@ pub enum TokenType {
     RPar,
     LBracket,
     RBracket,
+    LSquareBracket,
+    RSquareBracket,
     // Types
     CharArray,
     Number,
@@ -121,6 +123,8 @@ impl TokenType {
             TokenType::RPar => r"\)",
             TokenType::LBracket => r"\{",
             TokenType::RBracket => r"\}",
+            TokenType::LSquareBracket => r"\[",
+            TokenType::RSquareBracket => r"\]",
             TokenType::CharArray => r#"".*?[^\\]"|"""#,
             TokenType::Alphanumeric => r"[a-zA-Z_]\w*",
             TokenType::Number => r"\d+(\.\d+)?",

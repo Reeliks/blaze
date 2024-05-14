@@ -19,6 +19,7 @@ use super::tokens::{
 };
 use colored::*;
 use rand::seq::SliceRandom;
+use std::clone;
 use std::io::{self, Result};
 
 pub struct Parser {
@@ -187,11 +188,7 @@ impl Parser {
             x if VARIABLE_ASSIGNMENT_TOKENS.contains(&x) => {
                 let name_token
                     = self.require_token(vec![TokenType::Alphanumeric])?;
-                self.move_position();
                 let datatype = self.parse_datatype()?;
-                if datatype.is_none() {
-                    self.move_position_back();
-                };
                 let value_node  = self.parse_assignment()?;
                 Ok(Some(
                     Box::new(
@@ -215,9 +212,6 @@ impl Parser {
                     = self.parse_parameters_in_parenthesis(ParameterType::Function)?;
                 self.move_position();
                 let datatype = self.parse_datatype()?;
-                if datatype.is_none() {
-                    self.move_position_back();
-                }
                 Ok(Some(
                     Box::new(
                         FunctionDeclarationNode::new(
@@ -247,8 +241,7 @@ impl Parser {
     }
 
     fn parse_datatype(&mut self) -> Result<Option<String>> {
-        let current_token = self.get_current_token();
-        if current_token.is_ok() && current_token?.is_type(TokenType::Colon) {
+        if self.get_current_token().is_ok() && self.move_if_next_token_is(vec![TokenType::Colon]) {
             self.move_position();
             let datatype_token = self.require_token(vec![TokenType::Alphanumeric])?;
             return Ok(Some(datatype_token.value));
@@ -280,10 +273,8 @@ impl Parser {
     fn parse_parameters(&mut self, parameter_type: ParameterType) -> Result<Parameters> {
         let mut arguments: Parameters = vec![];
 
-        let _is_calling_parameter = parameter_type == ParameterType::Call;
-
         let mut keyword_arguments_time: bool = false;
-        let _check_if_incorrect_argument_sequence = |is_keyword_argument: bool, this: &mut Self| {
+        let mut check_if_incorrect_argument_sequence = |is_keyword_argument: bool, this: &mut Self| {
             if !is_keyword_argument && keyword_arguments_time {
                 let current_token = this.get_current_token()?;
                 return Err(io::Error::new(
@@ -304,65 +295,67 @@ impl Parser {
         };
 
         loop {
-            if self.get_current_token().is_err() {
+            if self.get_current_token().is_err() 
+            || !FORMULA_TOKENS.contains(&self.get_current_token()?.token_type) {
                 self.move_position_back();
                 break;
             };
 
-            let mut first_token = self.get_current_token()?;
+            let first_token = self.get_current_token()?; 
+            
 
-            if !arguments.is_empty() && first_token.is_type(TokenType::Comma) {
-                self.move_position();
-                if self.get_current_token().is_err() {
-                    return Ok(arguments);
+            match parameter_type {
+                ParameterType::Function => {
+                    if !first_token.is_type(TokenType::Alphanumeric) {
+                        self.move_position_back();
+                        break;
+                    };
+                    let datatype_string = self
+                        .parse_datatype()
+                        .expect("Error occured while datatype parsing");
+                    if datatype_string.is_none() {
+                        return Err(io::Error::new(
+                            io::ErrorKind::Other,
+                            format!(
+                                "{}: Argument type is expected <-= {}:{}:{}",
+                                "Syntax Error".bright_red(),
+                                self.context.code_source,
+                                self.context.line,
+                                self.context.position
+                            ),
+                        ));
+                    }
+                    let default_value = self.parse_assignment()?;
+                    check_if_incorrect_argument_sequence(default_value.is_some(), self)?;
+                    arguments.push(Parameter::new(
+                        first_token.value,
+                        datatype_string,
+                        default_value
+                    ));
                 }
-                first_token = self.get_current_token()?;
-            };
-
-            let value_node = if let assignment = self.parse_assignment() {
-                assignment
-            } else if let formula = self.parse_formula() {
-                formula
-            } else {
-                self.move_position_back();
-                break;
+                ParameterType::Call => {
+                    let assignment = self.parse_assignment()?;
+                    let is_assignment = assignment.is_some();
+                    let argument_value
+                    = if first_token.is_type(TokenType::Alphanumeric) && is_assignment {
+                        check_if_incorrect_argument_sequence(true, self)?;
+                        assignment
+                    } 
+                    else {
+                        check_if_incorrect_argument_sequence(false, self)?;
+                        self.parse_formula()?
+                    };
+                    arguments.push(Parameter::new(
+                        if is_assignment {first_token.value} else {String::new()} ,
+                        None,
+                        argument_value
+                    ));
+                }
             };
             self.move_position();
-
-            let datatype_string = self
-                .parse_datatype()
-                .expect("Error occured while datatype parsing");
-            if datatype_string.is_none() && parameter_type == ParameterType::Function {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!(
-                        "{}: Argument type is expected <-= {}:{}:{}",
-                        "Syntax Error".bright_red(),
-                        self.context.code_source,
-                        self.context.line,
-                        self.context.position
-                    ),
-                ));
-            } else if datatype_string.is_some() && parameter_type == ParameterType::Call {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!(
-                        "{}: Call argument doesn't require type notation <-= {}:{}:{}",
-                        "Syntax Error".bright_red(),
-                        self.context.code_source,
-                        self.context.line,
-                        self.context.position
-                    ),
-                ));
-            } else if datatype_string.is_some() {
+            if self.get_current_token().is_ok() && self.get_current_token()?.is_type(TokenType::Comma) {
                 self.move_position();
-            };
-
-            arguments.push(Parameter::new(
-                first_token.value,
-                datatype_string,
-                value_node,
-            ));
+            }
         }
         Ok(arguments)
     }

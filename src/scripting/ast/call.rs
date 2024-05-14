@@ -12,7 +12,11 @@ pub struct CallNode {
     _call_type: CallType,
 }
 
-impl ExpressionNode for CallNode {}
+impl ExpressionNode for CallNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(CallNode)
+    }
+}
 
 impl CallNode {
     pub fn new(callee: Box<dyn ExpressionNode>, arguments: Parameters) -> Self {
