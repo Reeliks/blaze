@@ -210,7 +210,6 @@ impl Parser {
                 self.move_position();
                 let arguments
                     = self.parse_parameters_in_parenthesis(ParameterType::Function)?;
-                self.move_position();
                 let datatype = self.parse_datatype()?;
                 Ok(Some(
                     Box::new(
