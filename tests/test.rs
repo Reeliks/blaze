@@ -25,12 +25,14 @@ fn test_lexer() {
     assert_eq!(actual_token_types, expected_tokens);
 }
 
-fn parser(code: String) -> std::io::Result<bool> {
-    let mut code_lexer = Lexer::new(code);
-    code_lexer.get_context().code_source = "Tests".to_string();
+fn parser(code: &str) -> std::io::Result<bool> {
+    let mut code_lexer = Lexer::new(code.to_string());
+    let code_source = String::from("Tests");
+    code_lexer.get_context().code_source = code_source.clone();
     let tokens = code_lexer.analyze()?;
 
     let mut code_parser = Parser::new(tokens.clone());
+    code_parser.get_context().code_source = code_source;
     let ast = code_parser.parse();
 
     Ok(ast.is_ok() && !tokens.is_empty() && !ast?.nodes.is_empty())
@@ -38,16 +40,15 @@ fn parser(code: String) -> std::io::Result<bool> {
 
 #[test]
 fn test_parser() {
-    assert!(parser("fin country_id = 1".to_string()).unwrap());
-    assert!(!parser("fifn country_id = 1".to_string()).unwrap());
+    assert!(parser("fin country_id = 1").unwrap());
+    assert!(!parser("fifn country_id = 1").unwrap());
     assert!(parser(
-        "function get_cheapest_cure(disease_name: str, pharmacy_is_open: bool): link;".to_string()
+        "function get_best_student_id(schools: list_of_int, min_grade: uint = 1, max_grade: uint = 12) {if empty(schools) {error} else somesearch(min_grade, arg=max_grade)}; result"
     )
     .unwrap());
-    assert!(!parser("9 * 12 import".to_string()).unwrap());
+    assert!(!parser("9 * 12 import").unwrap());
     assert!(parser(
         "mut best_apples: arr = grocery_store.get_best_product_instances(amount=5).result;"
-            .to_string()
     )
     .unwrap());
 }

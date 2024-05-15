@@ -30,6 +30,7 @@ pub enum TokenType {
     Inspect,
     // Conditions
     If,
+    Elif,
     Else,
     While,
     Continue,
@@ -52,6 +53,8 @@ pub enum TokenType {
     GreaterOrEqual,
     LessOrEqual,
     Hat,
+    And,
+    Or,
     // Assignment
     Assign,
     Mut,
@@ -87,13 +90,14 @@ impl TokenType {
     pub fn regex_str(&self) -> &str {
         match self {
             TokenType::If => r"if\b",
+            TokenType::Elif => r"elif\b",
+            TokenType::Else => r"else\b",
             TokenType::Mut => r"mut\b",
             TokenType::Fin => r"fin\b",
             TokenType::Enum => r"enum\b",
             TokenType::True => r"true\b",
             TokenType::False => r"false\b",
             TokenType::Null => r"null\b",
-            TokenType::Else => r"else\b",
             TokenType::While => r"while\b",
             TokenType::Import => r"import\b",
             TokenType::Manage => r"manage\b",
@@ -118,6 +122,8 @@ impl TokenType {
             TokenType::Less => r"<",
             TokenType::GreaterOrEqual => r">=",
             TokenType::LessOrEqual => r"<=",
+            TokenType::And => r"&&",
+            TokenType::Or => r"\|\|",
             TokenType::Hat => r"\^",
             TokenType::LPar => r"\(",
             TokenType::RPar => r"\)",
@@ -147,7 +153,7 @@ pub const WHITESPACE_TOKENS: [TokenType; 4] = [
     TokenType::Carriage,
 ];
 
-pub const BINARY_OPERATOR_TOKENS: [TokenType; 12] = [
+pub const BINARY_OPERATOR_TOKENS: [TokenType; 14] = [
     TokenType::Addition,
     TokenType::Subtraction,
     TokenType::Multiplication,
@@ -160,6 +166,8 @@ pub const BINARY_OPERATOR_TOKENS: [TokenType; 12] = [
     TokenType::GreaterOrEqual,
     TokenType::Hat,
     TokenType::Assign,
+    TokenType::And,
+    TokenType::Or,
 ];
 
 pub const UNARY_OPERATOR_TOKENS: [TokenType; 4] = [
@@ -170,7 +178,7 @@ pub const UNARY_OPERATOR_TOKENS: [TokenType; 4] = [
 ];
 
 // The tokens formulas can start with.
-pub const FORMULA_TOKENS: [TokenType; 10] = [
+pub const FORMULA_TOKENS: [TokenType; 12] = [
     TokenType::CharArray,
     TokenType::Number,
     TokenType::Alphanumeric,
@@ -181,6 +189,8 @@ pub const FORMULA_TOKENS: [TokenType; 10] = [
     TokenType::Decrement,
     TokenType::Negotion,
     TokenType::Link,
+    TokenType::LBracket,
+    TokenType::If,
 ];
 
 pub const VARIABLE_ASSIGNMENT_TOKENS: [TokenType; 2] = [TokenType::Mut, TokenType::Fin];
