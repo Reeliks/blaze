@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 regex = "1.10"
 bson = "2.10"
+ctrlc = "3.4.4"
 rand = "0.8"
 strum = "0.26"
 colored = "2.1.0"

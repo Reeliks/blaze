@@ -2,16 +2,16 @@ use dotenvy::dotenv;
 use regex::Regex;
 use std::{env, ffi::OsStr, path::Path};
 
-pub struct Config {
+pub struct RuntimeConfig {
     pub host: String,
     pub port: String,
-    pub manager_file: String,
+    pub manage_file: String,
     pub password: String,
 }
 
-impl Config {
+impl RuntimeConfig {
     fn value(user_key: String) -> Option<String> {
-        dotenv().expect(".env file not found");
+        dotenv().expect("Environment file couldn't be found");
 
         let user_key = Regex::new(r"env\.(\w+)")
             .unwrap()
@@ -38,7 +38,7 @@ impl Config {
         let default = Self::default();
         let mut host = default.host;
         let mut port = default.port;
-        let mut manager_file = default.manager_file;
+        let mut manage_file = default.manage_file;
         let mut password = default.password;
 
         for arg in 0..args.len() {
@@ -48,7 +48,7 @@ impl Config {
             }
 
             let arg = args.get(arg + 1)?;
-            let value = if let Some(parse_value) = Config::value(arg.to_string()) {
+            let value = if let Some(parse_value) = RuntimeConfig::value(arg.to_string()) {
                 parse_value
             } else {
                 arg.to_string()
@@ -57,24 +57,24 @@ impl Config {
             match str.as_str() {
                 "-host" => host.clone_from(&value),
                 "-port" => port.clone_from(&value),
-                "-blz_file" => manager_file.clone_from(&value),
+                "-m" => manage_file.clone_from(&value),
                 "-password" => password.clone_from(&value),
                 _ => (),
             }
         }
-        Some(Config {
+        Some(RuntimeConfig {
             host,
             port,
-            manager_file,
+            manage_file,
             password,
         })
     }
 
     fn default() -> Self {
-        Config {
+        RuntimeConfig {
             host: "localhost".to_string(),
             port: "3306".to_string(),
-            manager_file: "./db/datablaze/manage.blz".to_string(),
+            manage_file: "./manage.blz".to_string(),
             password: "password".to_string(),
         }
     }

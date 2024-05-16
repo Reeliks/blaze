@@ -1,18 +1,35 @@
-use crate::db::create_db;
+use colored::Colorize;
+
 use crate::scripting::tokens::Token;
 use crate::scripting::{lexer, parser};
-use crate::server::server_bz;
-use std::io::{self, Result};
+use crate::server::management;
+use std::fs::{self, File};
+use std::io::Write;
+use std::sync::mpsc;
+use std::{
+    io::{self, Result},
+    thread
+};
 
-pub fn handle_command_arguments() -> Result<()> {
-    let args: Vec<String> = std::env::args().collect();
+pub const OFFICIAL_REPOSITORY: &str = "https://github.com/Reeliks/blaze";
+
+pub fn handle_command() -> Result<()> {
+    let mut args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        print_help_section();
-        return Ok(());
+        args.push("help".to_string());
     };
-    match args[1].as_str() {
-        "create" => create_db_with_console()?,
-        "run" => server_bz::server_run(args)?,
+    let command = args[1].as_str();
+    match command {
+        "init" => {
+            if create_management_file() {
+                println!("Thanks for using {}!", "Blaze Database".yellow());
+                println!("  * To contribute the development process, check out the official repository:\n    {}", OFFICIAL_REPOSITORY);
+            }
+            else {
+                println!("{}: The file/folder with a name 'manage.blz' already exists, couldn't initialize", "Init Error".bright_red());
+            }
+        },
+        "run" | "raise" => run_server_with_console_output(args)?,
         "lexer" => {
             let text = input_text()?;
             analyze_lexically(text)?;
@@ -21,33 +38,62 @@ pub fn handle_command_arguments() -> Result<()> {
             let text = input_text()?;
             analyze_syntatically(text)?;
         }
+        "--help" | "help" => {
+            print_help_section()
+        }
         _ => {
-            eprintln!("Invalid arguments");
+            eprintln!("'{}' is not a blaze commmand. See 'blaze --help'", command);
             std::process::exit(1);
         }
     }
     Ok(())
 }
 
+fn run_server_with_console_output(args: Vec<String>) -> Result<()> {
+    let (info_channel_tx, info_channel_rx) = mpsc::channel::<String>();
+    thread::spawn(move || {
+        loop {
+            if let Ok(received) = info_channel_rx.try_recv() {
+                println!("{}", received);
+            }         
+        }
+    });
+    
+    if let Err(error) = management::run_server(args, info_channel_tx) {
+        eprintln!("{}", error);
+    };
+    Ok(())
+}
+
 fn print_help_section() {
-    let help_list = r#"Blaze Db 0.0.1a - available commands:
-    Database management
-        create  - create a new datablaze
-    Blaze Language
-        lexer   - get to see how the code is subjected to lexical analysis under the hood
-        parser  - try the first version of a parser
-        run     - start server"#;
+    let help_list = r#">> Blaze Database 0.0.1a - available commands:
+Datablaze Management
+    init    - create a new datablaze template to start working blazingly fast | create
+    run     - raise a datablaze configurated in manage.blz | raise
+    
+Blaze Language (Dev)
+    lexer   - tokens parsing
+    parser  - nodes parsing (lexing included)
+"#;
 
     println!("{}", help_list);
 }
 
-pub fn create_db_with_console() -> Result<()> {
-    let mut path = String::new();
-    println!("Specify a path to a datablaze");
-    io::stdin().read_line(&mut path)?;
-    create_db::create_db_structure(path.trim())?;
+pub fn create_management_file() -> bool {
+    let manage_file_content = br#"manage (
+    // port = "3305",
+    // host = "127.0.0.1",
+    // connections_limit = 10,
+);
 
-    Ok(())
+attach "data";"#;
+    if fs::metadata("manage.blz").is_err() {
+        let mut managing_file = File::create(&mut "manage.blz").unwrap();
+        managing_file.write_all(manage_file_content).unwrap();
+        return true;
+    };
+    false
+    
 }
 
 fn analyze_lexically(code_to_parse: String) -> Result<Vec<Token>> {
@@ -75,7 +121,7 @@ pub fn analyze_syntatically(code: String) -> Result<()> {
 }
 
 fn input_text() -> io::Result<String> {
-    let mut code_to_parse = String::new();
-    std::io::stdin().read_line(&mut code_to_parse)?;
-    Ok(code_to_parse)
+    let mut text = String::new();
+    std::io::stdin().read_line(&mut text)?;
+    Ok(text)
 }

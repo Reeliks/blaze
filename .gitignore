@@ -4,3 +4,4 @@
 /db/
 .vim
 .vscode
+*.blz

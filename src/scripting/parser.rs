@@ -274,11 +274,9 @@ impl Parser {
                 )))
             }
             TokenType::Return => {
-                let returned_formula_node 
-                    = if self.move_if_next_token_is(FORMULA_TOKENS.to_vec()) {
+                let returned_formula_node = if self.move_if_next_token_is(FORMULA_TOKENS.to_vec()) {
                     Some(self.require_formula()?)
-                } 
-                else {
+                } else {
                     None
                 };
                 Ok(Box::new(FunctionalReturnNode::new(returned_formula_node)))
@@ -289,15 +287,11 @@ impl Parser {
                 self.move_position();
                 Ok(Box::new(WhileLoopNode::new(
                     condition_node,
-                    self.require_body()?
+                    self.require_body()?,
                 )))
             }
-            TokenType::Continue => {
-                Ok(Box::new(LoopControlNode::new(LoopControlType::Continue)))
-            }
-            TokenType::Break => {
-                Ok(Box::new(LoopControlNode::new(LoopControlType::Break)))
-            }
+            TokenType::Continue => Ok(Box::new(LoopControlNode::new(LoopControlType::Continue))),
+            TokenType::Break => Ok(Box::new(LoopControlNode::new(LoopControlType::Break))),
             _ => Err(io::Error::new(
                 io::ErrorKind::Other,
                 format!(
@@ -465,6 +459,7 @@ impl Parser {
         Ok(object_node)
     }
 
+
     fn parse_formula(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
         let mut unary_operator_tokens: Vec<Token> = vec![];
         let mut prohibited_unary_operator_types: Vec<TokenType> = vec![];
@@ -489,6 +484,7 @@ impl Parser {
                 }
                 Ok(())
             };
+
 
         if self.get_current_token().is_err()
             || !FORMULA_TOKENS.contains(&self.get_current_token()?.token_type)
