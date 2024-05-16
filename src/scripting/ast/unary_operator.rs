@@ -8,7 +8,11 @@ pub struct UnaryOperatorNode {
     _side: TokenSide,
 }
 
-impl ExpressionNode for UnaryOperatorNode {}
+impl ExpressionNode for UnaryOperatorNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(UnaryOperatorNode)
+    }
+}
 
 impl UnaryOperatorNode {
     pub fn new(operator: TokenType, operand: Box<dyn ExpressionNode>, side: TokenSide) -> Self {

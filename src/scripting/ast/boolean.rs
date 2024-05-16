@@ -21,7 +21,11 @@ impl BooleanNode {
     }
 }
 
-impl ExpressionNode for BooleanNode {}
+impl ExpressionNode for BooleanNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(BooleanNode)
+    }
+}
 
 impl Default for BooleanNode {
     fn default() -> Self {

@@ -10,4 +10,8 @@ impl NumberNode {
     }
 }
 
-impl ExpressionNode for NumberNode {}
+impl ExpressionNode for NumberNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(NumberNode)
+    }
+}

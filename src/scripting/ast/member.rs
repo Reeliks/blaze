@@ -5,7 +5,11 @@ pub struct MemberNode {
     _child: Box<dyn ExpressionNode>,
 }
 
-impl ExpressionNode for MemberNode {}
+impl ExpressionNode for MemberNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(MemberNode)
+    }
+}
 
 impl MemberNode {
     pub fn new(parent: Box<dyn ExpressionNode>, child: Box<dyn ExpressionNode>) -> Self {

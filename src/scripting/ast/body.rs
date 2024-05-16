@@ -14,7 +14,11 @@ impl BodyNode {
     }
 }
 
-impl ExpressionNode for BodyNode {}
+impl ExpressionNode for BodyNode {
+    fn get_type(&self) -> &'static str {
+        stringify!(ExpressionNode)
+    }
+}
 
 impl Default for BodyNode {
     fn default() -> Self {

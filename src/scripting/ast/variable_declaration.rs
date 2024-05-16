@@ -20,4 +20,8 @@ impl VariableDeclaration {
     }
 }
 
-impl ExpressionNode for VariableDeclaration {}
+impl ExpressionNode for VariableDeclaration {
+    fn get_type(&self) -> &'static str {
+        stringify!(VariableDeclaration)
+    }
+}
