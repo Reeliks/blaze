@@ -5,7 +5,9 @@ use super::ast::call::CallNode;
 use super::ast::conditional_tree::{ConditionalTreeNode, Conditions};
 use super::ast::expression::ExpressionNode;
 use super::ast::function_declaration::FunctionDeclarationNode;
+use super::ast::functional_return::FunctionalReturnNode;
 use super::ast::identifier::IdentifierNode;
+use super::ast::loop_control::{LoopControlNode, LoopControlType};
 use super::ast::member::MemberNode;
 use super::ast::null::NullNode;
 use super::ast::number::NumberNode;
@@ -13,6 +15,7 @@ use super::ast::parameter::{Parameter, ParameterType, Parameters};
 use super::ast::string::StringNode;
 use super::ast::unary_operator::UnaryOperatorNode;
 use super::ast::variable_declaration::VariableDeclaration;
+use super::ast::while_loop::WhileLoopNode;
 use super::context::Context;
 use super::tokens::{
     Token, TokenSide, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS,
@@ -240,9 +243,9 @@ impl Parser {
 
     fn parse_expression(&mut self) -> Result<Box<dyn ExpressionNode>> {
         let current_token = self.get_current_token()?;
-        self.move_position();
         match current_token.token_type {
             x if VARIABLE_ASSIGNMENT_TOKENS.contains(&x) => {
+                self.move_position();
                 let name_token = self.require_token(vec![TokenType::Alphanumeric])?;
                 let datatype = self.parse_datatype()?;
                 let value_node = self.parse_assignment()?;
@@ -253,11 +256,11 @@ impl Parser {
                 )))
             }
             x if FORMULA_TOKENS.contains(&x) => {
-                self.move_position_back();
                 let formula_node = self.require_formula()?;
                 Ok(formula_node)
             }
             TokenType::Function => {
+                self.move_position();
                 let name_token = self.require_token(vec![TokenType::Alphanumeric])?;
                 self.move_position();
                 let arguments = self.parse_parameters_in_parenthesis(ParameterType::Function)?;
@@ -269,6 +272,31 @@ impl Parser {
                     arguments,
                     Some(self.require_body()?),
                 )))
+            }
+            TokenType::Return => {
+                let returned_formula_node 
+                    = if self.move_if_next_token_is(FORMULA_TOKENS.to_vec()) {
+                    Some(self.require_formula()?)
+                } 
+                else {
+                    None
+                };
+                Ok(Box::new(FunctionalReturnNode::new(returned_formula_node)))
+            }
+            TokenType::While => {
+                self.move_position();
+                let condition_node = self.require_formula()?;
+                self.move_position();
+                Ok(Box::new(WhileLoopNode::new(
+                    condition_node,
+                    self.require_body()?
+                )))
+            }
+            TokenType::Continue => {
+                Ok(Box::new(LoopControlNode::new(LoopControlType::Continue)))
+            }
+            TokenType::Break => {
+                Ok(Box::new(LoopControlNode::new(LoopControlType::Break)))
             }
             _ => Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -285,7 +313,7 @@ impl Parser {
     }
 
     fn parse_datatype(&mut self) -> Result<Option<String>> {
-        if self.get_current_token().is_ok() && self.move_if_next_token_is(vec![TokenType::Colon]) {
+        if self.move_if_next_token_is(vec![TokenType::Colon]) {
             self.move_position();
             let datatype_token = self.require_token(vec![TokenType::Alphanumeric])?;
             return Ok(Some(datatype_token.value));
@@ -294,7 +322,7 @@ impl Parser {
     }
 
     fn parse_assignment(&mut self) -> Result<Option<Box<dyn ExpressionNode>>> {
-        if self.get_current_token().is_ok() && self.move_if_next_token_is(vec![TokenType::Assign]) {
+        if self.move_if_next_token_is(vec![TokenType::Assign]) {
             self.move_position();
             let value_node = self.require_formula()?;
             return Ok(Some(value_node));
