@@ -58,6 +58,7 @@ dependencies = [
  "dotenvy",
  "rand",
  "regex",
+ "serde",
  "strum",
  "strum_macros",
 ]
