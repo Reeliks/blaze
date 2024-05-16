@@ -1,8 +1,17 @@
 use crate::db::create_db;
+use crate::fs::filesystem::Fs;
 use crate::scripting::tokens::Token;
 use crate::scripting::{lexer, parser};
 use crate::server::server_bz;
+use serde::{Deserialize, Serialize};
 use std::io::{self, Result};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Person {
+    name: String,
+    age: i32,
+    email: Option<String>,
+}
 
 pub fn handle_command_arguments() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -13,6 +22,20 @@ pub fn handle_command_arguments() -> Result<()> {
     match args[1].as_str() {
         "create" => create_db_with_console()?,
         "run" => server_bz::server_run(args)?,
+        "test" => {
+            let person = Person {
+                name: "SVD".to_string(),
+                age: 30,
+                email: Some("SVD@example.com".to_string()),
+            };
+
+            let bson_doc = bson::to_document(&person).unwrap();
+
+            Fs::db_open("./test.bson".to_string())
+                .unwrap()
+                .db_write("Usser".to_string(), bson_doc)
+                .unwrap();
+        }
         "lexer" => {
             let text = input_text()?;
             analyze_lexically(text)?;
