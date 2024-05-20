@@ -17,7 +17,7 @@ import scheme[target];
 attach()"./data.dblz";
 
 ```
-2. A package with functions, events, enums, plans, and tables
+2. A package with functions, events, enums, plans, lanes, and tables
 ```ruby
 package scheme;
 
@@ -31,7 +31,7 @@ enum Gender {
 };
 
 // Snake_case is the standard
-mut str = Gender.Male; // "boy"
+mut variable_showcase = Gender.Male; // "boy"
 fin best_gender: str = Gender[0]; // "unknown"
 
 enum TargetAudience {
@@ -56,7 +56,8 @@ table countries {
     geolocation: Geo;
 };
 
-// db.something is a call to a database
+// db.countries is some sort of a foreign key,
+// Question Mark means the country field can be null
 table accounts: uuid {
     name:       str[ <=30    ]  = format("User{}", id),
     bio:        str[ <=200   ],
@@ -90,7 +91,10 @@ event shopping_cart_updated("update", db.shopping_cart): x {
 };
 
 function get_population_of(country_name: str): int {
-    fin country_id = db.countries.(name=country_name).id; 
+    // db.contries.() is a call to a database,
+    // the condition inside parenthesis filters the "rows";
+    // .id returns an array of all the IDs of the filtered rows
+    fin country_id = db.countries.(self.name==country_name).id; 
     count(db.accounts.(country=country_id))
 };
 
