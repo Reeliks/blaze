@@ -5,3 +5,4 @@
 .vim
 .vscode
 *.blz
+Cargo.lock

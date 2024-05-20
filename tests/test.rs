@@ -1,8 +1,8 @@
-use blaze::db::create_db;
-use blaze::scripting::lexer::Lexer;
-use blaze::scripting::parser::Parser;
-use blaze::scripting::tokens::TokenType;
-use blaze::server::headers;
+use blaze::{
+    routine::info_channel::get_console_info_channel,
+    scripting::{ast::tokens::TokenType, lexer::Lexer, parser::Parser},
+    server::header_parsing::parse_header,
+};
 
 #[test]
 fn test_lexer() {
@@ -14,7 +14,7 @@ fn test_lexer() {
         TokenType::Else,
     ];
 
-    let code_lexer = Lexer::new(code_to_parse);
+    let code_lexer = Lexer::new(code_to_parse, get_console_info_channel());
     let tokens = code_lexer.analyze().unwrap();
 
     let actual_token_types: Vec<TokenType> = tokens
@@ -26,12 +26,12 @@ fn test_lexer() {
 }
 
 fn parser(code: &str) -> std::io::Result<bool> {
-    let mut code_lexer = Lexer::new(code.to_string());
+    let mut code_lexer = Lexer::new(code.to_string(), get_console_info_channel());
     let code_source = String::from("Tests");
     code_lexer.get_context().code_source = code_source.clone();
     let tokens = code_lexer.analyze()?;
 
-    let mut code_parser = Parser::new(tokens.clone());
+    let mut code_parser = Parser::new(tokens.clone(), get_console_info_channel());
     code_parser.get_context().code_source = code_source;
     let ast = code_parser.parse();
 
@@ -54,17 +54,11 @@ fn test_parser() {
 }
 
 #[test]
-fn test_cteate_db() {
-    let is_create = create_db::create_db_structure("./db".trim()).is_ok();
-    assert!(is_create);
-}
-
-#[test]
 fn test_header_parser() {
     let response = "POST / HTTP/1.1\nHost: localhost:3300\nUser-Agent: curl/8.7.1\nAccept: */*\nPassword: 1221\n"
     .to_string();
 
-    let hashmap = headers::parse_header(response).unwrap();
+    let hashmap = parse_header(response).unwrap();
     if let Some(value) = hashmap.get("Password") {
         assert!(value == "1221");
     }

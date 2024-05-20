@@ -3,21 +3,26 @@ use regex::Regex;
 use std::io;
 use strum::IntoEnumIterator;
 
+use crate::routine::info_channel::InfoChannel;
+
+use crate::prelude::*;
+use super::ast::tokens::{Token, TokenType, WHITESPACE_TOKENS};
 use super::context::Context;
-use super::tokens::{Token, TokenType, WHITESPACE_TOKENS};
 
 pub struct Lexer {
     pub context: Context,
     code: String,
     tokens: Vec<Token>,
+    info_channel: InfoChannel, // Connect it only on debugging
 }
 
 impl Lexer {
-    pub fn new(code: String) -> Self {
-        Lexer {
+    pub fn new(code: String, info_channel: InfoChannel) -> Self {
+        Self {
             code,
             context: Context::default(),
             tokens: vec![],
+            info_channel,
         }
     }
 
@@ -31,20 +36,23 @@ impl Lexer {
                 Ok(proceed_parsing) => {
                     if !proceed_parsing {
                         self.tokens.retain(|token| !token.is_type(TokenType::Space));
-                        return Ok(self.tokens);
+                        return Ok(self.tokens.clone());
                     }
                     let last_token = self.tokens.last().unwrap();
                     if !WHITESPACE_TOKENS.contains(&last_token.token_type) {
                         let start_position =
                             1 + self.context.position - last_token.value.len() as u64;
-                        println!(
-                            "{}:{} = {}",
-                            start_position, last_token.value, last_token.token_type
-                        );
+                        self.info_channel
+                            .clone()
+                            .send(format!(
+                                "{}:{} = {}",
+                                start_position, last_token.value, last_token.token_type
+                            ))
+                            .unwrap();
                     }
                 }
                 Err(err) => {
-                    eprintln!("{}", err);
+                    self.info_channel.send(err.to_string()).unwrap();
                     break;
                 }
             };
@@ -61,7 +69,11 @@ impl Lexer {
             let token_regex_string = TokenType::regex_str(&token_type);
             let token_regex = Regex::new(&format!(r#"^{}"#, token_regex_string)).unwrap();
             if let Some(matches) = token_regex.find(positioned_code) {
-                let matched_str = matches.as_str();
+                let matched_str = if token_type == TokenType::Number {
+                    matches.as_str().replace('_', "")
+                } else {
+                    matches.as_str().to_string()
+                };
                 self.tokens.push(Token {
                     token_type,
                     start: self.context.position,
@@ -78,7 +90,7 @@ impl Lexer {
             }
         }
         Err(io::Error::new(
-            io::ErrorKind::Other,
+            ErrorKind::Other,
             format!(
                 "{}: '{}' {} <-= at {}:{}:{}",
                 "Lexical Error".bright_red(),
@@ -106,7 +118,7 @@ impl Lexer {
             let last_token_is_number = last_token.is_type(TokenType::Number);
             if last_token_is_number && current_token_is_alphanumeric {
                 return Err(io::Error::new(
-                    io::ErrorKind::Other,
+                    ErrorKind::Other,
                     format!(
                         "{}: numbers cannot end with alphanumeric <-= at {}:{}:{}",
                         "Lexical Error".bright_red(),
@@ -142,9 +154,9 @@ impl Lexer {
                     || left_side_unresolved_chars_regex.is_match(char_before)
                 {
                     return Err(io::Error::new(
-                        io::ErrorKind::Other,
+                        ErrorKind::Other,
                         format!(
-                            "{}: \"{}\" near a string with no space between <-= at {}:{}:{}",
+                            "{}: \"{}\" before a string with no space between <-= at {}:{}:{}",
                             "Lexical Error".bright_red(),
                             char_before,
                             self.context.code_source,
@@ -163,7 +175,7 @@ impl Lexer {
                     .to_string();
                 if both_sides_unresolved_chars_regex.is_match(char_after) {
                     return Err(io::Error::new(
-                        io::ErrorKind::Other,
+                        ErrorKind::Other,
                         format!(
                             "{}: \"{}\" after a string with no space between <-= at {}:{}:{}",
                             "Lexical Error".bright_red(),
