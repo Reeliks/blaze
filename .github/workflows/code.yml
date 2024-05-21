@@ -22,8 +22,8 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-#      - name: Check formatting
-#        run: cargo fmt -- --check
+      - name: Check formatting
+        run: cargo fmt -- --check
 
       - name: Run clippy
         run: cargo clippy --all-features -- -D warnings
