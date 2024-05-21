@@ -99,8 +99,8 @@ Blaze Language (Dev)
     pub fn create_management_file(name: &str) -> bool {
         let manage_file_content = br#"manage (
     // address = "localhost:3306",
-    // cons_limit = 100,
-    // con_lifetime = 60
+    // sessions_limit = 100,
+    // session_lifetime = 60
 );
 
 attach "data";"#;

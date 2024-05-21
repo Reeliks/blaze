@@ -5,9 +5,9 @@ use strum::IntoEnumIterator;
 
 use crate::routine::info_channel::InfoChannel;
 
-use crate::prelude::*;
 use super::ast::tokens::{Token, TokenType, WHITESPACE_TOKENS};
 use super::context::Context;
+use crate::prelude::*;
 
 pub struct Lexer {
     pub context: Context,

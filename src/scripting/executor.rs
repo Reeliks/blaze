@@ -7,7 +7,7 @@ pub struct Executor<'a> {
 
 impl<'a> Executor<'a> {
     pub fn new(context: &'a mut Context) -> Self {
-        Executor { _context: context }
+        Self { _context: context }
     }
 
     pub fn execute(self, _nodes: BodyNode) -> Result<()> {

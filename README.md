@@ -9,8 +9,8 @@ And of course it's <strong>blazingly fast</strong>
 ```ruby 
 manage (
     address      = "127.0.0.1:3306",
-    cons_limit   = 250,
-    con_lifetime = 120
+    sessions_limit   = 250,
+    session_lifetime = 120
 );
 
 import scheme[target];

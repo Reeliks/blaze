@@ -2,16 +2,9 @@ use chrono::Local;
 use colored::Colorize;
 use ctrlc;
 
+use super::{client_session::ClientSession, header_parsing, runtime_config::RuntimeConfig};
 use crate::prelude::*;
-use super::{
-    client_connection::ClientConnection, 
-    header_parsing, 
-    runtime_config::RuntimeConfig
-};
-use crate::routine::{
-    formatting::MessagesFormatting, 
-    info_channel::InfoChannel
-};
+use crate::routine::{formatting::MessagesFormatting, info_channel::InfoChannel};
 use std::{
     io::{self, Read, Result, Write},
     net::TcpListener,
@@ -23,7 +16,7 @@ use std::{
 
 pub struct ServerInstance {
     info_channel: InfoChannel,
-    connections: Vec<ClientConnection>,
+    sessions: Vec<ClientSession>,
     config: RuntimeConfig,
 }
 
@@ -31,7 +24,7 @@ impl ServerInstance {
     pub fn new(info_channel: InfoChannel) -> Self {
         Self {
             info_channel,
-            connections: vec![],
+            sessions: vec![],
             config: RuntimeConfig::default(),
         }
     }
@@ -45,7 +38,8 @@ impl ServerInstance {
                 error_marking,
                 &self.config.manage_file,
                 if args.is_empty() && self.config.manage_file == "main.manage.blz" {
-                    "\n".to_owned()+&String::from("Try to specify a path to the management file").into_hint()
+                    "\n".to_owned()
+                        + &String::from("Try to specify a path to the management file").into_hint()
                 } else {
                     "".to_string()
                 },
@@ -111,19 +105,19 @@ impl ServerInstance {
         })
         .expect("Error occured while setting ctrl+c handler");
 
-        self.start_closed_connections_cleaner().await;
+        self.start_closed_sessions_cleaner().await;
         self.handle_connections(listener).await?;
         Ok(())
     }
 
-    async fn start_closed_connections_cleaner(&mut self) -> tokio::task::JoinHandle<()> {
+    async fn start_closed_sessions_cleaner(&mut self) -> tokio::task::JoinHandle<()> {
         unsafe {
             let this = &mut *(self as *mut Self);
             tokio::spawn(async move {
                 loop {
                     thread::sleep(Duration::from_secs(10));
-                    this.connections
-                        .retain(|connection: &ClientConnection| !connection.closed);
+                    this.sessions
+                        .retain(|session: &ClientSession| session.is_active());
                 }
             })
         }
@@ -146,18 +140,18 @@ impl ServerInstance {
             if client_password.is_none() || correct_password != client_password.unwrap() {
                 stream.write_all(b"HTTP/1.1 401 Unauthorized - Incorrect password\r\n\n")?;
                 continue;
-            } else if self.connections.len() + 1 > self.config.cons_limit as usize {
+            } else if self.sessions.len() + 1 > self.config.sessions_limit as usize {
                 stream.write_all(b"HTTP/1.1 503 Sessions Limit\r\n\n")?;
             }
-            let new_session =
-                ClientConnection::create(Local::now(), self.config.con_lifetime).await;
+            let mut new_session = ClientSession::new(Local::now());
+            new_session.activate_temporairly(self.config.session_lifetime);
             let session_id = new_session.id;
-            self.connections.push(new_session);
+            self.sessions.push(new_session);
             let response_content = format!("{}", session_id);
 
             self.info_channel
                 .clone()
-                .send("A new connection's been created".to_string())
+                .send("A new session been created".to_string())
                 .unwrap();
 
             stream

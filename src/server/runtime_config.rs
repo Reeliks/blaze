@@ -13,8 +13,8 @@ pub struct RuntimeConfig {
     pub address: String,
     pub manage_file: String,
     pub password: String,
-    pub cons_limit: u32,
-    pub con_lifetime: Duration,
+    pub sessions_limit: u32,
+    pub session_lifetime: Duration,
 }
 
 impl Default for RuntimeConfig {
@@ -23,8 +23,8 @@ impl Default for RuntimeConfig {
             address: "localhost:3306".to_string(),
             manage_file: "./main.manage.blz".to_string(),
             password: "password".to_string(),
-            cons_limit: 100,
-            con_lifetime: Duration::from_secs(30),
+            sessions_limit: 100,
+            session_lifetime: Duration::from_secs(30),
         }
     }
 }
@@ -59,8 +59,8 @@ impl RuntimeConfig {
         let mut address = default.address;
         let mut password = default.password;
         let mut manage_file: String = "main.manage.blz".to_string();
-        let mut cons_limit: u32 = default.cons_limit;
-        let mut con_lifetime: Duration = default.con_lifetime;
+        let mut sessions_limit: u32 = default.sessions_limit;
+        let mut session_lifetime: Duration = default.session_lifetime;
 
         let manage_file_fullname_regex = Regex::new(r".*\.manage\.blz$").unwrap();
 
@@ -102,12 +102,12 @@ impl RuntimeConfig {
             match argument_keyword.as_str() {
                 "-address" => address.clone_from(&argument_value),
                 "-password" => password.clone_from(&argument_value),
-                "-session_lifetime" => con_lifetime.clone_from(&Duration::from_secs(
+                "-session_lifetime" => session_lifetime.clone_from(&Duration::from_secs(
                     argument_value
                         .parse()
                         .expect("Provide the right amount of seconds a session lives"),
                 )),
-                "-sessions_limit" => cons_limit.clone_from(
+                "-sessions_limit" => sessions_limit.clone_from(
                     &argument_value
                         .parse()
                         .expect("Unable to parse 'sessions_limit' field due to the incorrect type"),
@@ -119,8 +119,8 @@ impl RuntimeConfig {
             address,
             manage_file,
             password,
-            cons_limit,
-            con_lifetime,
+            sessions_limit,
+            session_lifetime,
         })
     }
 }
