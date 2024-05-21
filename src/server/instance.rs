@@ -2,16 +2,9 @@ use chrono::Local;
 use colored::Colorize;
 use ctrlc;
 
+use super::{client_connection::ClientConnection, header_parsing, runtime_config::RuntimeConfig};
 use crate::prelude::*;
-use super::{
-    client_connection::ClientConnection, 
-    header_parsing, 
-    runtime_config::RuntimeConfig
-};
-use crate::routine::{
-    formatting::MessagesFormatting, 
-    info_channel::InfoChannel
-};
+use crate::routine::{formatting::MessagesFormatting, info_channel::InfoChannel};
 use std::{
     io::{self, Read, Result, Write},
     net::TcpListener,
@@ -45,7 +38,8 @@ impl ServerInstance {
                 error_marking,
                 &self.config.manage_file,
                 if args.is_empty() && self.config.manage_file == "main.manage.blz" {
-                    "\n".to_owned()+&String::from("Try to specify a path to the management file").into_hint()
+                    "\n".to_owned()
+                        + &String::from("Try to specify a path to the management file").into_hint()
                 } else {
                     "".to_string()
                 },
