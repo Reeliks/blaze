@@ -1,6 +1,7 @@
-use crate::scripting::tokens::{TokenSide, TokenType};
-
-use super::expression::ExpressionNode;
+use super::{
+    expression::ExpressionNode,
+    tokens::{TokenSide, TokenType},
+};
 
 pub struct UnaryOperatorNode {
     _operator: TokenType,

@@ -5,84 +5,100 @@ And of course it's <strong>blazingly fast</strong>
 
 
 ## ✨ Blaze Language Syntax (currently uncompleted)
-1. Manager.blz (used to raise the database with packages, settings and ispects included)
+1. Manage file (configuration and attaching to a datafile are only available in this type of files)
 ```ruby 
 manage (
-    packages = "./packages",
-    max_connections = 8,
-    port = "6980",
-    host = "127.0.0.1"
+    address      = "127.0.0.1:3306",
+    sessions_limit   = 250,
+    session_lifetime = 120
 );
 
-import users:all, animals:species;
-
-inspect all;
-
-attach "./data";
+import scheme[target];
+attach()"./data.dblz";
 
 ```
-2. Basic Scheme and some declarations
+2. A package with functions, events, enums, plans, lanes, and tables
 ```ruby
 package scheme;
 
-enum Gender: str {
-    Male, 
-    Female, 
-    Other,
-    Unspecified
+// Enum Members have their own IDs
+// so you can access them without any changes but here.
+enum Gender {
+    Unspecified = [ 0, "unknown" ],
+    Male        = [ 1, "boy"     ], 
+    Female      = [ 2, "girl"    ], 
+    Other       = [ 3, "other"   ],
 };
 
-enum TargetAudience: str {
-    Kids,
-    Everyone,
-    Adults,
-    Elderly
+// Snake_case is the standard
+mut variable_showcase = Gender.Male; // "boy"
+fin best_gender: str = Gender[0]; // "unknown"
+
+enum TargetAudience {
+    Kids        = [ 0, lower(self [0]) ],
+    Everyone    = [ 1, lower(self [1]) ],
+    Adults      = [ 2, lower(self [2]) ],
+    Elderly     = [ 3, lower(self [3]) ],
 };
 
+// Plan is a data structure that can be used for instances creation,
+// and tables & lanes implementation
+plan Geo {
+    x: float, y: float
+}
+
+// Table ID's are created without explicit declaration,
+// Exclamation mark means the field value must be unique
 table countries {
-    name: str <=50,
-    alpha2: str 2,
-    alpha3: str 3,
-    geolocation: geo;
+    name:        !str[ <50 ],
+    alpha2:      !str[ =2  ],
+    alpha3:      !str[ =2  ],
+    geolocation: Geo;
 };
 
+// db.countries is some sort of a foreign key,
+// Question Mark means the country field can be null
 table accounts: uuid {
-    name: str <=30 = format("User{}", self.id),
-    bio: str <=200,
-    password: str,
-    gender: Gender = Gender.Unspecified,
-    age: int >0 <100,
-    country: &countries?,
-    created_at: datetime = "now";
+    name:       str[ <=30    ]  = format("User{}", id),
+    bio:        str[ <=200   ],
+    password:   str[ >8      ],
+    age:        int[ >0 <100 ],
+    gender:     Gender          = Gender.Unspecified,
+    created_at: datetime        = "now";
+    country:    db.countries?,
 };
 
-
-table products: uuid {
-    title: str = "product",
-    seller: &accounts,
-    price: float >= 0,
+plan Products {
+    title:       str            = "product",
+    created_at:  datetime       = "now",
+    seller:      db.accounts,
+    price:       float[>=0],
     description: str,
-    created_at: datetime = "now",
-    sales_count: int >=0 ,
-    audience: TargetAudience = TargetAudience.Everyone;
+    sales_count: int[>-1],
+    audience:    TargetAudience = TargetAudience.Everyone;
 }  
+table products(Products): uuid;
 
 table shopping_cart {
-    account: &account!,
-    added_products: &products[],
-    last_update: datetime = "now";
+    account:        !db.accounts,
+    added_products: !arr[db.products],
+    last_update:    timestamp[local]   = "now";
 };
 
-event shopping_cart_update (&shopping_cart.added_products, "change") {
-    &shopping_cart.last_update = "now";
+// Should be considered
+event shopping_cart_updated("update", db.shopping_cart): x {
+    x.last_update = "now";
 };
 
 function get_population_of(country_name: str): int {
-    fin country_id = &countries.{self.name=country_name}.id; 
-    count(&accounts.{self.country=country_id})
+    // db.contries.() is a call to a database,
+    // the condition inside parenthesis filters the "rows";
+    // .id returns an array of all the IDs of the filtered rows
+    fin country_id = db.countries.(self.name==country_name).id; 
+    count(db.accounts.(country=country_id))
 };
 
-function get_total_cart_price(products: &products[]): float {
+function get_total_cart_price(products: Products): float {
     mut total: float = 0;
     product of products {
         total += product.price;

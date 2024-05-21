@@ -5,7 +5,7 @@ pub struct Context {
 }
 
 impl Context {
-    fn new(code_source: String) -> Self {
+    pub fn new(code_source: String) -> Self {
         Context {
             code_source,
             position: 0,

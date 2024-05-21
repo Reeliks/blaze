@@ -1,13 +1,16 @@
-pub struct Executor {}
+use super::{ast::body::BodyNode, context::Context};
+use std::io::Result;
 
-impl Executor {
-    pub fn new() -> Self {
-        Executor {}
-    }
+pub struct Executor<'a> {
+    _context: &'a mut Context,
 }
 
-impl Default for Executor {
-    fn default() -> Self {
-        Self::new()
+impl<'a> Executor<'a> {
+    pub fn new(context: &'a mut Context) -> Self {
+        Self { _context: context }
+    }
+
+    pub fn execute(self, _nodes: BodyNode) -> Result<()> {
+        Ok(())
     }
 }

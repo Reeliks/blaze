@@ -1,26 +1,30 @@
-use super::ast::binary_operator::BinaryOperatorNode;
-use super::ast::body::BodyNode;
-use super::ast::boolean::BooleanNode;
-use super::ast::call::CallNode;
-use super::ast::conditional_tree::{ConditionalTreeNode, Conditions};
-use super::ast::expression::ExpressionNode;
-use super::ast::function_declaration::FunctionDeclarationNode;
-use super::ast::functional_return::FunctionalReturnNode;
-use super::ast::identifier::IdentifierNode;
-use super::ast::loop_control::{LoopControlNode, LoopControlType};
-use super::ast::member::MemberNode;
-use super::ast::null::NullNode;
-use super::ast::number::NumberNode;
-use super::ast::parameter::{Parameter, ParameterType, Parameters};
-use super::ast::string::StringNode;
-use super::ast::unary_operator::UnaryOperatorNode;
-use super::ast::variable_declaration::VariableDeclaration;
-use super::ast::while_loop::WhileLoopNode;
-use super::context::Context;
-use super::tokens::{
-    Token, TokenSide, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS,
-    VARIABLE_ASSIGNMENT_TOKENS,
+use super::ast::{
+    binary_operator::BinaryOperatorNode,
+    body::BodyNode,
+    boolean::BooleanNode,
+    call::CallNode,
+    conditional_tree::{ConditionalTreeNode, Conditions},
+    expression::ExpressionNode,
+    function_declaration::FunctionDeclarationNode,
+    functional_return::FunctionalReturnNode,
+    identifier::IdentifierNode,
+    loop_control::{LoopControlNode, LoopControlType},
+    member::MemberNode,
+    null::NullNode,
+    number::NumberNode,
+    parameter::{Parameter, ParameterType, Parameters},
+    string::StringNode,
+    tokens::{
+        Token, TokenSide, TokenType, BINARY_OPERATOR_TOKENS, FORMULA_TOKENS, UNARY_OPERATOR_TOKENS,
+        VARIABLE_ASSIGNMENT_TOKENS,
+    },
+    unary_operator::UnaryOperatorNode,
+    variable_declaration::VariableDeclaration,
+    while_loop::WhileLoopNode,
 };
+use super::context::Context;
+use crate::routine::info_channel::InfoChannel;
+
 use colored::*;
 use rand::seq::SliceRandom;
 use std::io::{self, Result};
@@ -30,16 +34,21 @@ pub struct Parser {
     context: Context,
     parser_position: u64,
 
+    _info_channel: InfoChannel,
     syntax_error_marking: ColoredString,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(
+        tokens: Vec<Token>,
+        info_channel: InfoChannel, // Connect it only on debugging
+    ) -> Self {
         Parser {
             context: Context::default(),
             tokens,
             parser_position: 0,
 
+            _info_channel: info_channel,
             syntax_error_marking: "Syntax Error".bright_red(),
         }
     }
@@ -274,11 +283,9 @@ impl Parser {
                 )))
             }
             TokenType::Return => {
-                let returned_formula_node 
-                    = if self.move_if_next_token_is(FORMULA_TOKENS.to_vec()) {
+                let returned_formula_node = if self.move_if_next_token_is(FORMULA_TOKENS.to_vec()) {
                     Some(self.require_formula()?)
-                } 
-                else {
+                } else {
                     None
                 };
                 Ok(Box::new(FunctionalReturnNode::new(returned_formula_node)))
@@ -289,15 +296,11 @@ impl Parser {
                 self.move_position();
                 Ok(Box::new(WhileLoopNode::new(
                     condition_node,
-                    self.require_body()?
+                    self.require_body()?,
                 )))
             }
-            TokenType::Continue => {
-                Ok(Box::new(LoopControlNode::new(LoopControlType::Continue)))
-            }
-            TokenType::Break => {
-                Ok(Box::new(LoopControlNode::new(LoopControlType::Break)))
-            }
+            TokenType::Continue => Ok(Box::new(LoopControlNode::new(LoopControlType::Continue))),
+            TokenType::Break => Ok(Box::new(LoopControlNode::new(LoopControlType::Break))),
             _ => Err(io::Error::new(
                 io::ErrorKind::Other,
                 format!(
@@ -428,12 +431,11 @@ impl Parser {
                     ));
                 }
             };
-            self.move_position();
-            if self.get_current_token().is_ok()
-                && self.get_current_token()?.is_type(TokenType::Comma)
-            {
-                self.move_position();
+            if !self.move_if_next_token_is(vec![TokenType::Comma]) {
+                break;
             }
+            self.move_position();
+            continue;
         }
         Ok(arguments)
     }

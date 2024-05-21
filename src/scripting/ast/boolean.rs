@@ -1,8 +1,6 @@
 use std::io;
 
-use crate::scripting::tokens::TokenType;
-
-use super::expression::ExpressionNode;
+use super::{expression::ExpressionNode, tokens::TokenType};
 
 pub struct BooleanNode {
     _state: bool,

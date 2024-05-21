@@ -1,6 +1,4 @@
-use crate::scripting::tokens::TokenType;
-
-use super::expression::ExpressionNode;
+use super::{expression::ExpressionNode, tokens::TokenType};
 
 pub struct BinaryOperatorNode {
     _operator: TokenType,

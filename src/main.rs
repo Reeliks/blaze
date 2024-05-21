@@ -1,8 +1,6 @@
-use std::io::Result;
+use blaze::shell::command_handler::ShellCommandHandler;
 
-use blaze::shell;
-
-fn main() -> Result<()> {
-    shell::handling::handle_command_arguments()?;
-    Ok(())
+#[tokio::main]
+async fn main() {
+    ShellCommandHandler::new().handle_command().await.unwrap();
 }

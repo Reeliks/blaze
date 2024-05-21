@@ -53,7 +53,10 @@ impl Fs {
             if *key == table_name {
                 value.push(data.clone());
             } else {
-                doc.insert(table_name.clone(), Bson::Array(vec![Bson::from(data.clone())]));
+                doc.insert(
+                    table_name.clone(),
+                    Bson::Array(vec![Bson::from(data.clone())]),
+                );
             }
         }
 

@@ -2,11 +2,11 @@ use super::expression::ExpressionNode;
 
 pub enum LoopControlType {
     Continue,
-    Break
+    Break,
 }
 
 pub struct LoopControlNode {
-    _control_type: LoopControlType
+    _control_type: LoopControlType,
 }
 
 impl ExpressionNode for LoopControlNode {
@@ -18,7 +18,7 @@ impl ExpressionNode for LoopControlNode {
 impl LoopControlNode {
     pub fn new(control_type: LoopControlType) -> Self {
         LoopControlNode {
-            _control_type: control_type
+            _control_type: control_type,
         }
     }
 }
